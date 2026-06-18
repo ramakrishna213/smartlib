@@ -3,7 +3,9 @@ services:
     name: smartlib
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: python app.py
+    startCommand: gunicorn wsgi:app
     envVars:
       - key: PYTHON_VERSION
         value: 3.13.0
+      - key: SECRET_KEY
+        value: smartlib-production-secret-2024

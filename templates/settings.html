@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page">
+  <h1 class="page-title">Settings</h1>
+  <p class="page-subtitle">Manage your app preferences and account settings.</p>
+
+  <div style="margin-top:16px">
+    <form method="POST" action="{{ url_for('main.settings') }}">
+      <!-- Profile -->
+      <div class="settings-section">
+        <div class="settings-title">Profile</div>
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input type="text" name="name" class="form-control" value="{{ current_user.name }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-control" value="{{ current_user.email }}" disabled
+                 style="background:#f9fafb;color:#9ca3af">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Role</label>
+          <input type="text" class="form-control" value="{{ current_user.role|capitalize }}" disabled
+                 style="background:#f9fafb;color:#9ca3af">
+        </div>
+      </div>
+
+      <!-- Appearance -->
+      <div class="settings-section">
+        <div class="settings-title">Appearance</div>
+        <div class="settings-item">
+          <div class="settings-icon"><i class="fa-regular fa-sun"></i></div>
+          <div><div class="settings-label">Dark Mode</div><div class="settings-sub">Toggle dark/light theme</div></div>
+          <button type="button" class="toggle" onclick="this.classList.toggle('on')"></button>
+        </div>
+        <div class="settings-item">
+          <div class="settings-icon"><i class="fa-regular fa-globe"></i></div>
+          <div style="flex:1"><div class="settings-label">Language</div><div class="settings-sub">English (US)</div></div>
+          <span class="chevron"><i class="fa-solid fa-chevron-right"></i></span>
+        </div>
+      </div>
+
+      <!-- Notifications -->
+      <div class="settings-section">
+        <div class="settings-title">Notifications</div>
+        <div class="settings-item">
+          <div class="settings-icon"><i class="fa-regular fa-bell"></i></div>
+          <div><div class="settings-label">Push Notifications</div><div class="settings-sub">Receive alerts on your device</div></div>
+          <button type="button" class="toggle on"></button>
+        </div>
+        <div class="settings-item">
+          <div class="settings-icon"><i class="fa-regular fa-bell"></i></div>
+          <div><div class="settings-label">Email Alerts</div><div class="settings-sub">Overdue and fine reminders</div></div>
+          <button type="button" class="toggle on"></button>
+        </div>
+      </div>
+
+      <!-- Security -->
+      <div class="settings-section">
+        <div class="settings-title">Security & Privacy</div>
+        <div class="form-group">
+          <label class="form-label">New Password</label>
+          <input type="password" name="new_password" class="form-control"
+                 placeholder="Leave blank to keep current">
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Save Changes</button>
+    </form>
+
+    <div style="margin-top:16px">
+      <a href="{{ url_for('auth.logout') }}" class="btn btn-outline btn-sm"
+         style="color:#ef4444;border-color:#ef4444;width:100%;justify-content:center">
+        <i class="fa-solid fa-right-from-bracket"></i> Logout
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page">
+  <h1 class="page-title">Issue Book</h1>
+  <p class="page-subtitle">Process a new book borrowing transaction.</p>
+
+  <div style="margin-top:16px">
+    <form method="POST" action="{{ url_for('main.issue_book') }}">
+      <div class="card">
+        <div style="font-size:15px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+          <i class="fa-regular fa-user" style="color:#2563eb"></i> Select Student
+        </div>
+        <div class="form-group">
+          <label class="form-label">Student ID</label>
+          <select name="student_id" class="form-control" required>
+            <option value="">Select a student...</option>
+            {% for member in members %}
+            <option value="{{ member.student_id }}">
+              {{ member.name }} ({{ member.student_id }})
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="font-size:15px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+          <i class="fa-regular fa-book-open" style="color:#2563eb"></i> Select Book
+        </div>
+        <div class="form-group">
+          <label class="form-label">Available Books</label>
+          <select name="book_id" class="form-control" required>
+            <option value="">Select a book...</option>
+            {% for book in books %}
+            <option value="{{ book.id }}">
+              {{ book.title }} by {{ book.author }} ({{ book.available_qty }} left)
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="card" style="background:#f0f9ff;border-color:#bae6fd;margin-top:8px;padding:12px">
+          <div style="font-size:12px;color:#0369a1">
+            <i class="fa-solid fa-circle-info"></i>
+            Due date will be set to <strong>14 days</strong> from today.
+            Fine rate: <strong>$0.50/day</strong> for late returns.
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary">
+        Issue Book <i class="fa-solid fa-arrow-right"></i>
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

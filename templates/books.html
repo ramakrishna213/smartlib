@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <h1 class="page-title">Book Catalog</h1>
+      <p class="page-subtitle">Manage library books and inventory.</p>
+    </div>
+    {% if current_user.role == 'admin' %}
+    <a href="{{ url_for('main.add_book') }}" class="btn btn-primary btn-sm">
+      <i class="fa-solid fa-plus"></i> Add
+    </a>
+    {% endif %}
+  </div>
+
+  <!-- Search -->
+  <div style="margin-top:16px">
+    <form method="GET" class="search-bar">
+      <input type="text" name="search" class="form-control"
+             placeholder="Search by title, author..." value="{{ search }}">
+      <button type="submit">Search</button>
+    </form>
+
+    <!-- Category Tabs -->
+    <div class="tabs">
+      <a href="{{ url_for('main.books') }}" class="tab {% if not request.args.get('category') %}active{% endif %}">All</a>
+      {% for cat in categories %}
+      <a href="{{ url_for('main.books', category=cat.id) }}"
+         class="tab {% if request.args.get('category')|int == cat.id %}active{% endif %}">
+        {{ cat.name }}
+      </a>
+      {% endfor %}
+    </div>
+
+    <!-- Book List -->
+    {% if books %}
+      {% for book in books %}
+      <a href="{{ url_for('main.book_detail', book_id=book.id) }}" style="text-decoration:none">
+        <div class="book-card">
+          <div class="book-cover-placeholder">
+            <i class="fa-solid fa-book"></i>
+          </div>
+          <div class="book-info">
+            <div class="book-title">{{ book.title }}</div>
+            <div class="book-author">{{ book.author }}</div>
+            <div class="book-meta">
+              <i class="fa-regular fa-book-open"></i> {{ book.category.name }} • {{ book.publication_year }}
+            </div>
+            <div class="book-footer">
+              <span style="color:#f59e0b;font-size:12px">
+                ★ {{ book.rating }}
+              </span>
+              {% if book.is_available %}
+                <span class="badge badge-green">Available</span>
+              {% else %}
+                <span class="badge badge-red">Unavailable</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    {% else %}
+      <div class="card" style="text-align:center;padding:28px">
+        <i class="fa-regular fa-book-open" style="font-size:32px;color:#d1d5db"></i>
+        <p style="color:#9ca3af;margin-top:10px;font-size:14px">No books found</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

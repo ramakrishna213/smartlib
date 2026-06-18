@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <h1 class="page-title">Fine History</h1>
+      <p class="page-subtitle">View and manage all fine transactions.</p>
+    </div>
+  </div>
+
+  <div style="margin-top:16px">
+    <!-- Filter Tabs -->
+    <div class="tabs">
+      <a href="{{ url_for('main.fines') }}" class="tab {% if status=='all' %}active{% endif %}">All</a>
+      <a href="{{ url_for('main.fines', status='paid') }}" class="tab {% if status=='paid' %}active{% endif %}">Paid</a>
+      <a href="{{ url_for('main.fines', status='unpaid') }}" class="tab {% if status=='unpaid' %}active{% endif %}">Unpaid</a>
+    </div>
+
+    <div class="card">
+      {% if fines %}
+        {% for fine in fines %}
+        <div class="fine-row">
+          <div>
+            <div class="fine-id">{{ fine.transaction_id }}</div>
+            <div class="fine-name">{{ fine.user.name }}</div>
+            <div class="fine-book">{{ fine.issued_book.book.title }} • {{ fine.days_late }} days late</div>
+          </div>
+          <div style="text-align:right">
+            <div class="fine-amount">${{ "%.2f"|format(fine.amount) }}</div>
+            {% if fine.status == 'unpaid' %}
+              <span class="badge badge-red" style="margin-top:4px">Unpaid</span>
+              <form method="POST" action="{{ url_for('main.pay_fine', fine_id=fine.id) }}" style="margin-top:6px">
+                <button class="btn btn-primary btn-sm">Pay</button>
+              </form>
+            {% else %}
+              <span class="badge badge-green" style="margin-top:4px">Paid</span>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div style="text-align:center;padding:28px">
+          <i class="fa-regular fa-circle-check" style="font-size:32px;color:#d1d5db"></i>
+          <p style="color:#9ca3af;margin-top:10px;font-size:14px">No fines found</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

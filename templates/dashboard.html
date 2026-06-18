@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="page">
+  <h1 class="page-title">My Dashboard</h1>
+  <p class="page-subtitle">Track your reading progress and borrowed books.</p>
+
+  <div style="margin-top: 16px;">
+
+    <!-- Overdue Alert -->
+    {% if overdue %}
+    <div class="alert alert-danger">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <div>
+        <div class="alert-title">Action Required: Overdue Books</div>
+        <div class="alert-msg">You have {{ overdue|length }} book(s) past their due date.
+          Please return them to avoid further fines.</div>
+        <a href="{{ url_for('main.fines') }}" class="btn btn-danger btn-sm"
+           style="margin-top: 10px; display: inline-flex;">
+          Pay Fines
+        </a>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Currently Borrowed -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <div style="font-size:15px; font-weight:600; display:flex; align-items:center; gap:8px;">
+        <i class="fa-regular fa-book-open" style="color:#2563eb"></i>
+        Currently Borrowed
+      </div>
+      <a href="{{ url_for('main.fines') }}" style="font-size:13px; color:#2563eb; text-decoration:none; font-weight:500;">
+        View History
+      </a>
+    </div>
+
+    {% if active_loans %}
+      {% for loan in active_loans %}
+      <div class="book-card">
+        <div class="book-cover-placeholder">
+          <i class="fa-solid fa-book"></i>
+        </div>
+        <div class="book-info">
+          <div class="book-title">{{ loan.book.title }}</div>
+          <div class="book-author">{{ loan.book.author }}</div>
+          <div style="margin-top: 8px;">
+            {% if loan.is_overdue %}
+              <span class="due-overdue">
+                <i class="fa-solid fa-clock"></i>
+                Overdue by {{ (today - loan.due_date).days }} days
+              </span>
+            {% elif loan.days_left <= 3 %}
+              <span class="due-warning">
+                <i class="fa-solid fa-clock"></i>
+                {{ loan.days_left }} days left
+              </span>
+            {% else %}
+              <span class="due-ok">
+                <i class="fa-regular fa-clock"></i>
+                {{ loan.days_left }} days left
+              </span>
+            {% endif %}
+          </div>
+          <div style="font-size:11px; color:#9ca3af; margin-top:2px;">
+            Due: {{ loan.due_date.strftime('%Y-%m-%d') }}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="card" style="text-align:center; padding:28px;">
+        <i class="fa-regular fa-book-open" style="font-size:32px; color:#d1d5db;"></i>
+        <p style="color:#9ca3af; margin-top:10px; font-size:14px;">
+          No books currently borrowed
+        </p>
+        <a href="{{ url_for('main.books') }}" class="btn btn-primary btn-sm"
+           style="margin-top:14px; display:inline-flex;">
+          Browse Books
+        </a>
+      </div>
+    {% endif %}
+
+    <!-- Unpaid Fines Summary -->
+    {% if unpaid_fines %}
+    <div style="margin-top: 16px;">
+      <div class="fines-banner">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <div>
+            <div class="fines-banner-label">Pending Fines</div>
+            <div class="fines-banner-amount">
+              ${{ "%.2f"|format(unpaid_fines|sum(attribute='amount')) }}
+            </div>
+            <div style="font-size:12px; opacity:0.85; margin-top:4px;">
+              {{ unpaid_fines|length }} unpaid transaction(s)
+            </div>
+          </div>
+          <i class="fa-regular fa-clock" style="font-size:28px; opacity:0.7;"></i>
+        </div>
+        <a href="{{ url_for('main.fines') }}" class="btn btn-sm"
+           style="margin-top:14px; background:rgba(255,255,255,0.25);
+                  color:#fff; display:inline-flex;">
+          View & Pay Fines
+        </a>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+{% endblock %}

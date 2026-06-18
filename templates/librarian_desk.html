@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page">
+  <h1 class="page-title">Librarian Desk</h1>
+  <p class="page-subtitle">Manage daily library operations efficiently.</p>
+
+  <div style="margin-top:16px">
+    <!-- Action Grid -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <a href="{{ url_for('main.issue_book') }}" class="card" style="text-align:center;text-decoration:none;padding:20px">
+        <div style="font-size:28px;color:#2563eb;margin-bottom:8px">
+          <i class="fa-solid fa-upload"></i>
+        </div>
+        <div style="font-size:13px;font-weight:600;color:#111827">Issue Book</div>
+      </a>
+      <a href="{{ url_for('main.books') }}" class="card" style="text-align:center;text-decoration:none;padding:20px">
+        <div style="font-size:28px;color:#2563eb;margin-bottom:8px">
+          <i class="fa-solid fa-download"></i>
+        </div>
+        <div style="font-size:13px;font-weight:600;color:#111827">Return Book</div>
+      </a>
+      <a href="{{ url_for('main.members') }}" class="card" style="text-align:center;text-decoration:none;padding:20px">
+        <div style="font-size:28px;color:#2563eb;margin-bottom:8px">
+          <i class="fa-solid fa-user-plus"></i>
+        </div>
+        <div style="font-size:13px;font-weight:600;color:#111827">Add Member</div>
+      </a>
+      <a href="{{ url_for('main.books') }}" class="card" style="text-align:center;text-decoration:none;padding:20px">
+        <div style="font-size:28px;color:#2563eb;margin-bottom:8px">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </div>
+        <div style="font-size:13px;font-weight:600;color:#111827">Search Books</div>
+      </a>
+    </div>
+
+    <!-- Pending Fines Banner -->
+    <div class="fines-banner">
+      <div class="fines-banner-label">Pending Fines to Collect</div>
+      <div class="fines-banner-amount">${{ "%.2f"|format(pending_fines) }}</div>
+      <div style="font-size:12px;opacity:0.85;margin-top:4px">{{ overdue|length }} overdue books</div>
+    </div>
+
+    <!-- Overdue List -->
+    {% if overdue %}
+    <div class="card" style="margin-top:12px">
+      <div class="card-title" style="color:#ef4444;margin-bottom:10px">
+        <i class="fa-solid fa-triangle-exclamation"></i> Overdue ({{ overdue|length }})
+      </div>
+      {% for loan in overdue %}
+      <div class="fine-row">
+        <div>
+          <div class="fine-name">{{ loan.book.title }}</div>
+          <div class="fine-book">{{ loan.member.name }} • Due: {{ loan.due_date }}</div>
+        </div>
+        <form method="POST" action="{{ url_for('main.return_book', issue_id=loan.id) }}">
+          <button class="btn btn-danger btn-sm">Return</button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

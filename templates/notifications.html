@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page">
+  <h1 class="page-title">Notifications</h1>
+  <p class="page-subtitle">Stay updated with library activities.</p>
+
+  <div style="margin-top:16px">
+    <div class="card">
+      {% if notifications %}
+        {% for n in notifications %}
+        <div class="notif-item">
+          <div class="notif-icon"
+               style="background:{% if n.type=='overdue' %}#fee2e2{% elif n.type=='reservation' %}#dbeafe{% else %}#dcfce7{% endif %}">
+            {% if n.type == 'overdue' %}
+              <i class="fa-solid fa-triangle-exclamation" style="color:#ef4444"></i>
+            {% elif n.type == 'reservation' %}
+              <i class="fa-regular fa-book-open" style="color:#2563eb"></i>
+            {% else %}
+              <i class="fa-regular fa-bell" style="color:#16a34a"></i>
+            {% endif %}
+          </div>
+          <div style="flex:1">
+            <div class="notif-title">{{ n.title }}</div>
+            <div class="notif-msg">{{ n.message }}</div>
+            <div class="notif-time">{{ n.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div style="text-align:center;padding:28px">
+          <i class="fa-regular fa-bell" style="font-size:32px;color:#d1d5db"></i>
+          <p style="color:#9ca3af;margin-top:10px;font-size:14px">No notifications</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

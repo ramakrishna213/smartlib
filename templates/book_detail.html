@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page">
+  <div style="margin-bottom:16px">
+    <a href="{{ url_for('main.books') }}" style="color:#2563eb;font-size:13px;text-decoration:none">
+      ← Back to Catalog
+    </a>
+  </div>
+
+  <!-- Book Cover -->
+  <div class="book-cover-placeholder"
+       style="width:100%;height:180px;border-radius:12px;font-size:48px;margin-bottom:16px">
+    <i class="fa-solid fa-book"></i>
+  </div>
+
+  <!-- Book Info -->
+  <h1 class="page-title">{{ book.title }}</h1>
+  <p style="color:#6b7280;font-size:14px;margin-top:4px">{{ book.author }}</p>
+
+  <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center">
+    <span class="badge badge-blue">{{ book.category.name }}</span>
+    <span class="badge badge-blue">{{ book.publication_year }}</span>
+    <span style="color:#f59e0b;font-size:13px;font-weight:600">★ {{ book.rating }}</span>
+    {% if book.is_available %}
+      <span class="badge badge-green">Available ({{ book.available_qty }} copies)</span>
+    {% else %}
+      <span class="badge badge-red">Unavailable</span>
+    {% endif %}
+  </div>
+
+  <!-- Description -->
+  {% if book.description %}
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">Description</div>
+    <p style="font-size:13px;color:#374151;line-height:1.6;margin-top:8px">
+      {{ book.description }}
+    </p>
+  </div>
+  {% endif %}
+
+  <!-- Book Stats -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
+    <div class="card" style="text-align:center;padding:14px">
+      <div style="font-size:22px;font-weight:700;color:#2563eb">{{ book.total_quantity }}</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px">Total Copies</div>
+    </div>
+    <div class="card" style="text-align:center;padding:14px">
+      <div style="font-size:22px;font-weight:700;color:#16a34a">{{ book.available_qty }}</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px">Available Now</div>
+    </div>
+  </div>
+
+  <!-- Issue History -->
+  <div class="card" style="margin-top:12px">
+    <div class="card-title" style="margin-bottom:10px">
+      <i class="fa-regular fa-clock" style="color:#2563eb"></i> Recent Issue History
+    </div>
+    {% if history %}
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <tr style="border-bottom:2px solid #f3f4f6">
+        <th style="text-align:left;padding:6px 4px;color:#6b7280;font-weight:500">Student</th>
+        <th style="text-align:left;padding:6px 4px;color:#6b7280;font-weight:500">Issued</th>
+        <th style="text-align:left;padding:6px 4px;color:#6b7280;font-weight:500">Return</th>
+        <th style="text-align:left;padding:6px 4px;color:#6b7280;font-weight:500">Status</th>
+      </tr>
+      {% for h in history %}
+      <tr style="border-bottom:1px solid #f3f4f6">
+        <td style="padding:8px 4px;font-weight:500;color:#111827">{{ h.member.name }}</td>
+        <td style="padding:8px 4px;color:#6b7280">{{ h.issue_date }}</td>
+        <td style="padding:8px 4px;color:#6b7280">{{ h.return_date or '—' }}</td>
+        <td style="padding:8px 4px">
+          {% if h.status == 'active' %}
+            <span class="badge badge-amber">Active</span>
+          {% elif h.status == 'returned' %}
+            <span class="badge badge-green">Returned</span>
+          {% else %}
+            <span class="badge badge-red">Overdue</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}
+    <div style="text-align:center;padding:20px">
+      <i class="fa-regular fa-clock" style="font-size:28px;color:#d1d5db"></i>
+      <p style="color:#9ca3af;font-size:13px;margin-top:8px">No issue history yet</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Issue Button (librarian/admin only) -->
+  {% if current_user.role in ['admin', 'librarian'] and book.is_available %}
+  <div style="margin-top:12px">
+    <a href="{{ url_for('main.issue_book') }}" class="btn btn-primary">
+      <i class="fa-solid fa-upload"></i> Issue This Book
+    </a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

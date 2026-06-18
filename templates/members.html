@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <h1 class="page-title">Members</h1>
+      <p class="page-subtitle">Manage library members and their accounts.</p>
+    </div>
+    <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm">
+      <i class="fa-solid fa-plus"></i> Add
+    </a>
+  </div>
+
+  <div style="margin-top:16px">
+    <!-- Search -->
+    <form method="GET" class="search-bar">
+      <input type="text" name="search" class="form-control"
+             placeholder="Search members..." value="{{ request.args.get('search','') }}">
+      <button type="submit">Search</button>
+    </form>
+
+    <!-- Department Tabs -->
+    <div class="tabs">
+      <a href="{{ url_for('main.members') }}" class="tab {% if not request.args.get('department') %}active{% endif %}">All</a>
+      {% for dept in departments %}
+      <a href="{{ url_for('main.members', department=dept) }}"
+         class="tab {% if request.args.get('department') == dept %}active{% endif %}">
+        {{ dept }}
+      </a>
+      {% endfor %}
+    </div>
+
+    <!-- Members List -->
+    <div class="card">
+      {% if members %}
+        {% for member in members %}
+        <div class="member-card">
+          <div class="member-avatar" style="background:{{ ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6']|random }}22;color:{{ ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6']|random }}">
+            {{ member.name[:2].upper() }}
+          </div>
+          <div style="flex:1">
+            <div class="member-name">{{ member.name }}</div>
+            <div class="member-meta">{{ member.student_id }} • {{ member.email }}</div>
+          </div>
+          <div style="font-size:11px;color:#6b7280">{{ member.department }}</div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p style="color:#9ca3af;font-size:13px;text-align:center;padding:20px">No members found.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

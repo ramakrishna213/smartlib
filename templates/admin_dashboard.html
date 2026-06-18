@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page">
+  <h1 class="page-title">My Dashboard</h1>
+  <p class="page-subtitle">Admin overview of SmartLib system.</p>
+
+  <div style="margin-top:16px">
+    <!-- Stats -->
+    <div class="stat-card">
+      <div class="stat-label"><i class="fa-regular fa-book-open" style="color:#2563eb;margin-right:8px"></i>Total Books</div>
+      <div class="stat-value">{{ total_books }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label"><i class="fa-regular fa-users" style="color:#2563eb;margin-right:8px"></i>Active Members</div>
+      <div class="stat-value">{{ total_members }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label"><i class="fa-regular fa-clock" style="color:#f59e0b;margin-right:8px"></i>Active Loans</div>
+      <div class="stat-value">{{ active_loans }}</div>
+    </div>
+
+    <!-- Pending Fines Banner -->
+    <div class="fines-banner">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="fines-banner-label">Pending Fines to Collect</div>
+          <div class="fines-banner-amount">${{ "%.2f"|format(total_fines) }}</div>
+          <div style="font-size:12px;opacity:0.85;margin-top:4px">{{ overdue_books|length }} overdue books</div>
+        </div>
+        <i class="fa-regular fa-clock" style="font-size:28px;opacity:0.7"></i>
+      </div>
+      <a href="{{ url_for('main.fines') }}" class="btn btn-sm"
+         style="margin-top:14px;background:rgba(255,255,255,0.25);color:#fff;display:inline-flex">
+        View Fine History
+      </a>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card">
+      <div class="card-title">Quick Actions</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+        <a href="{{ url_for('main.issue_book') }}" class="btn btn-primary btn-sm">
+          <i class="fa-solid fa-upload"></i> Issue Book
+        </a>
+        <a href="{{ url_for('main.books') }}" class="btn btn-outline btn-sm">
+          <i class="fa-regular fa-book-open"></i> View Books
+        </a>
+        <a href="{{ url_for('main.members') }}" class="btn btn-outline btn-sm">
+          <i class="fa-regular fa-users"></i> Members
+        </a>
+        <a href="{{ url_for('main.analytics') }}" class="btn btn-outline btn-sm">
+          <i class="fa-solid fa-chart-bar"></i> Analytics
+        </a>
+      </div>
+    </div>
+
+    <!-- Overdue Books -->
+    {% if overdue_books %}
+    <div class="card">
+      <div class="card-title" style="color:#ef4444">
+        <i class="fa-solid fa-triangle-exclamation"></i> Overdue Books ({{ overdue_books|length }})
+      </div>
+      {% for loan in overdue_books[:5] %}
+      <div class="fine-row">
+        <div>
+          <div class="fine-name">{{ loan.book.title }}</div>
+          <div class="fine-book">{{ loan.member.name }} • Due: {{ loan.due_date }}</div>
+        </div>
+        <form method="POST" action="{{ url_for('main.return_book', issue_id=loan.id) }}">
+          <button class="btn btn-danger btn-sm">Return</button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

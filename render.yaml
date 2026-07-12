@@ -6,6 +6,4 @@ services:
     startCommand: gunicorn wsgi:app
     envVars:
       - key: PYTHON_VERSION
-        value: 3.13.0
-      - key: SECRET_KEY
-        value: smartlib-production-secret-2024
+        value: 3.11.0

@@ -11,9 +11,7 @@ main = Blueprint('main', __name__)
 
 def db():
     from flask_sqlalchemy import SQLAlchemy
-    # Get the single db instance attached to the current app
     for ext in current_app.extensions.values():
-        from flask_sqlalchemy import SQLAlchemy
         if isinstance(ext, SQLAlchemy):
             return ext
     raise RuntimeError("No SQLAlchemy extension found")
@@ -108,6 +106,49 @@ def register():
         flash('Account created! Please login.', 'success')
         return redirect(url_for('auth.login'))
     return render_template('register.html')
+
+
+# ─── Google OAuth ──────────────────────────────────
+@auth.route('/auth/google')
+def google_login():
+    google = current_app.extensions['google_oauth']
+    redirect_uri = url_for('auth.google_callback', _external=True)
+    return google.authorize_redirect(redirect_uri)
+
+
+@auth.route('/auth/google/callback')
+def google_callback():
+    import secrets
+    google  = current_app.extensions['google_oauth']
+    token   = google.authorize_access_token()
+    info    = token.get('userinfo')
+
+    if not info:
+        flash('Google login failed. Please try again.', 'danger')
+        return redirect(url_for('auth.login'))
+
+    session = db().session
+    email   = info['email']
+    name    = info.get('name', email)
+
+    user = session.execute(
+        select(m().User).where(m().User.email == email)
+    ).scalar_one_or_none()
+
+    if not user:
+        user = m().User(
+            name=name,
+            email=email,
+            role='member',
+            password_hash=generate_password_hash(secrets.token_hex(16))
+        )
+        session.add(user)
+        session.commit()
+        flash(f'Account created for {name}! Welcome to SmartLib.', 'success')
+
+    login_user(user)
+    flash(f'Welcome, {user.name}!', 'success')
+    return redirect(url_for('main.dashboard'))
 
 
 # ─── Dashboard ─────────────────────────────────────
@@ -407,9 +448,9 @@ def notifications():
 @login_required
 @admin_required
 def analytics():
-    session              = db().session
-    total_circulation    = session.execute(select(func.count(m().IssuedBook.id))).scalar()
-    active_members       = session.execute(
+    session               = db().session
+    total_circulation     = session.execute(select(func.count(m().IssuedBook.id))).scalar()
+    active_members        = session.execute(
         select(func.count(m().User.id)).where(
             m().User.role == 'member', m().User.is_active == True)
     ).scalar()

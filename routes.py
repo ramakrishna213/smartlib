@@ -4,6 +4,7 @@ from datetime import date, timedelta, datetime
 from functools import wraps
 from sqlalchemy import select, or_, func
 from werkzeug.security import generate_password_hash
+import secrets
 
 auth = Blueprint('auth', __name__)
 main = Blueprint('main', __name__)
@@ -118,7 +119,6 @@ def google_login():
 
 @auth.route('/auth/google/callback')
 def google_callback():
-    import secrets
     google  = current_app.extensions['google_oauth']
     token   = google.authorize_access_token()
     info    = token.get('userinfo')
@@ -137,9 +137,58 @@ def google_callback():
 
     if not user:
         user = m().User(
-            name=name,
-            email=email,
-            role='member',
+            name=name, email=email, role='member',
+            password_hash=generate_password_hash(secrets.token_hex(16))
+        )
+        session.add(user)
+        session.commit()
+        flash(f'Account created for {name}! Welcome to SmartLib.', 'success')
+
+    login_user(user)
+    flash(f'Welcome, {user.name}!', 'success')
+    return redirect(url_for('main.dashboard'))
+
+
+# ─── GitHub OAuth ──────────────────────────────────
+@auth.route('/auth/github')
+def github_login():
+    github = current_app.extensions['github_oauth']
+    redirect_uri = url_for('auth.github_callback', _external=True)
+    return github.authorize_redirect(redirect_uri)
+
+
+@auth.route('/auth/github/callback')
+def github_callback():
+    github  = current_app.extensions['github_oauth']
+    token   = github.authorize_access_token()
+
+    # Get user profile
+    user_resp = github.get('user', token=token)
+    info      = user_resp.json()
+
+    # Get email (may be private)
+    email = info.get('email')
+    if not email:
+        emails_resp = github.get('user/emails', token=token)
+        for e in emails_resp.json():
+            if e.get('primary') and e.get('verified'):
+                email = e.get('email')
+                break
+
+    if not email:
+        flash('Could not get email from GitHub.', 'danger')
+        return redirect(url_for('auth.login'))
+
+    name    = info.get('name') or info.get('login') or email
+    session = db().session
+
+    user = session.execute(
+        select(m().User).where(m().User.email == email)
+    ).scalar_one_or_none()
+
+    if not user:
+        user = m().User(
+            name=name, email=email, role='member',
             password_hash=generate_password_hash(secrets.token_hex(16))
         )
         session.add(user)

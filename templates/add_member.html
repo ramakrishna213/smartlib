@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page">
+    <h1 class="page-title">Add Member</h1>
+    <p class="page-subtitle">Register a new library member.</p>
+
+    <form method="POST">
+
+        <div class="form-group">
+            <label class="form-label">Full Name</label>
+            <input type="text" name="name" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Student ID</label>
+            <input type="text" name="student_id" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Department</label>
+            <input type="text" name="department" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" name="password" class="form-control" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            Add Member
+        </button>
+
+    </form>
+</div>
+{% endblock %}

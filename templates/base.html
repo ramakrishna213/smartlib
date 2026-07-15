@@ -423,6 +423,10 @@
 {% endif %}
 
 <script>
+  // Apply dark mode on every page load
+if (localStorage.getItem('darkMode') === 'true') {
+  document.body.classList.add('dark');
+}
   function openSidebar() {
     document.getElementById('sidebar').style.left = '0';
     document.getElementById('overlay').style.display = 'block';

@@ -1,26 +1,59 @@
 {% extends "base.html" %}
 {% block content %}
+
+<style>
+  .toggle-wrap {
+    margin-left: auto; position: relative;
+    width: 44px; height: 24px; flex-shrink: 0;
+  }
+  .toggle-input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .toggle-slider {
+    position: absolute; cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #e5e7eb; border-radius: 12px;
+    transition: background 0.2s;
+  }
+  .toggle-slider::after {
+    content: ''; position: absolute;
+    top: 2px; left: 2px; width: 20px; height: 20px;
+    border-radius: 50%; background: #fff;
+    transition: transform 0.2s;
+  }
+  .toggle-input:checked + .toggle-slider { background: #2563eb; }
+  .toggle-input:checked + .toggle-slider::after { transform: translateX(20px); }
+
+  .lang-select {
+    margin-left: auto; background: #f3f4f6;
+    border: none; border-radius: 8px; padding: 6px 10px;
+    font-size: 12px; color: #374151; cursor: pointer;
+  }
+</style>
+
 <div class="page">
   <h1 class="page-title">Settings</h1>
   <p class="page-subtitle">Manage your app preferences and account settings.</p>
 
   <div style="margin-top:16px">
+
+    <!-- Profile Section -->
     <form method="POST" action="{{ url_for('main.settings') }}">
-      <!-- Profile -->
       <div class="settings-section">
         <div class="settings-title">Profile</div>
         <div class="form-group">
           <label class="form-label">Full Name</label>
-          <input type="text" name="name" class="form-control" value="{{ current_user.name }}">
+          <input type="text" name="name" class="form-control"
+                 value="{{ current_user.name }}">
         </div>
         <div class="form-group">
           <label class="form-label">Email</label>
-          <input type="email" class="form-control" value="{{ current_user.email }}" disabled
+          <input type="email" class="form-control"
+                 value="{{ current_user.email }}" disabled
                  style="background:#f9fafb;color:#9ca3af">
         </div>
         <div class="form-group">
           <label class="form-label">Role</label>
-          <input type="text" class="form-control" value="{{ current_user.role|capitalize }}" disabled
+          <input type="text" class="form-control"
+                 value="{{ current_user.role|capitalize }}" disabled
                  style="background:#f9fafb;color:#9ca3af">
         </div>
       </div>
@@ -28,52 +61,230 @@
       <!-- Appearance -->
       <div class="settings-section">
         <div class="settings-title">Appearance</div>
+
         <div class="settings-item">
           <div class="settings-icon"><i class="fa-regular fa-sun"></i></div>
-          <div><div class="settings-label">Dark Mode</div><div class="settings-sub">Toggle dark/light theme</div></div>
-          <button type="button" class="toggle" onclick="this.classList.toggle('on')"></button>
+          <div>
+            <div class="settings-label">Dark Mode</div>
+            <div class="settings-sub">Toggle dark/light theme</div>
+          </div>
+          <label class="toggle-wrap">
+            <input type="checkbox" class="toggle-input" id="dark-mode-toggle">
+            <span class="toggle-slider"></span>
+          </label>
         </div>
+
         <div class="settings-item">
           <div class="settings-icon"><i class="fa-regular fa-globe"></i></div>
-          <div style="flex:1"><div class="settings-label">Language</div><div class="settings-sub">English (US)</div></div>
-          <span class="chevron"><i class="fa-solid fa-chevron-right"></i></span>
+          <div style="flex:1">
+            <div class="settings-label">Language</div>
+            <div class="settings-sub">Select your preferred language</div>
+          </div>
+          <select class="lang-select" id="lang-select" onchange="changeLanguage(this.value)">
+            <option value="en">English (US)</option>
+            <option value="hi">Hindi</option>
+            <option value="ta">Tamil</option>
+            <option value="te">Telugu</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="es">Spanish</option>
+          </select>
         </div>
       </div>
 
       <!-- Notifications -->
       <div class="settings-section">
         <div class="settings-title">Notifications</div>
+
         <div class="settings-item">
           <div class="settings-icon"><i class="fa-regular fa-bell"></i></div>
-          <div><div class="settings-label">Push Notifications</div><div class="settings-sub">Receive alerts on your device</div></div>
-          <button type="button" class="toggle on"></button>
+          <div>
+            <div class="settings-label">Push Notifications</div>
+            <div class="settings-sub">Receive alerts on your device</div>
+          </div>
+          <label class="toggle-wrap">
+            <input type="checkbox" class="toggle-input" id="push-toggle"
+                   name="push_notifications" checked
+                   onchange="saveSetting('push_notifications', this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
         </div>
+
         <div class="settings-item">
-          <div class="settings-icon"><i class="fa-regular fa-bell"></i></div>
-          <div><div class="settings-label">Email Alerts</div><div class="settings-sub">Overdue and fine reminders</div></div>
-          <button type="button" class="toggle on"></button>
+          <div class="settings-icon"><i class="fa-regular fa-envelope"></i></div>
+          <div>
+            <div class="settings-label">Email Alerts</div>
+            <div class="settings-sub">Overdue and fine reminders</div>
+          </div>
+          <label class="toggle-wrap">
+            <input type="checkbox" class="toggle-input" id="email-toggle"
+                   name="email_alerts" checked
+                   onchange="saveSetting('email_alerts', this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
         </div>
       </div>
 
       <!-- Security -->
       <div class="settings-section">
         <div class="settings-title">Security & Privacy</div>
-        <div class="form-group">
+        <div class="settings-item">
+          <div class="settings-icon"><i class="fa-solid fa-lock"></i></div>
+          <div style="flex:1">
+            <div class="settings-label">Change Password</div>
+            <div class="settings-sub">Update your login credentials</div>
+          </div>
+          <span class="chevron"><i class="fa-solid fa-chevron-right"></i></span>
+        </div>
+        <div class="form-group" style="margin-top:10px">
           <label class="form-label">New Password</label>
           <input type="password" name="new_password" class="form-control"
                  placeholder="Leave blank to keep current">
         </div>
+
+        <div class="settings-item">
+          <div class="settings-icon"><i class="fa-solid fa-shield"></i></div>
+          <div>
+            <div class="settings-label">Two-Factor Auth</div>
+            <div class="settings-sub">Extra security for your account</div>
+          </div>
+          <label class="toggle-wrap">
+            <input type="checkbox" class="toggle-input" id="tfa-toggle">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
       </div>
 
-      <button type="submit" class="btn btn-primary">Save Changes</button>
+      <button type="submit" class="btn btn-primary">
+        <i class="fa-solid fa-check"></i> Save Changes
+      </button>
     </form>
 
+    <!-- Logout -->
     <div style="margin-top:16px">
-      <a href="{{ url_for('auth.logout') }}" class="btn btn-outline btn-sm"
-         style="color:#ef4444;border-color:#ef4444;width:100%;justify-content:center">
+      <a href="{{ url_for('auth.logout') }}"
+         class="btn btn-sm"
+         style="color:#ef4444;border:1.5px solid #ef4444;
+                width:100%;justify-content:center;background:#fff">
         <i class="fa-solid fa-right-from-bracket"></i> Logout
       </a>
     </div>
+
+    <!-- App Info -->
+    <div style="text-align:center;margin-top:24px;color:#9ca3af;font-size:12px">
+      SmartLib v1.0 • Built with Python + Flask
+    </div>
+
   </div>
 </div>
+
+<script>
+  // ── Dark Mode ──────────────────────────────
+  const darkToggle = document.getElementById('dark-mode-toggle');
+  const isDark = localStorage.getItem('darkMode') === 'true';
+
+  if (isDark) {
+    document.body.classList.add('dark');
+    darkToggle.checked = true;
+  }
+
+  darkToggle.addEventListener('change', function() {
+    if (this.checked) {
+      document.body.classList.add('dark');
+      localStorage.setItem('darkMode', 'true');
+    } else {
+      document.body.classList.remove('dark');
+      localStorage.setItem('darkMode', 'false');
+    }
+  });
+
+  // ── Language ──────────────────────────────
+  const savedLang = localStorage.getItem('language') || 'en';
+  document.getElementById('lang-select').value = savedLang;
+
+  function changeLanguage(lang) {
+    localStorage.setItem('language', lang);
+    const messages = {
+      'en': 'Language set to English!',
+      'hi': 'भाषा हिंदी में सेट की गई!',
+      'ta': 'மொழி தமிழில் அமைக்கப்பட்டது!',
+      'te': 'భాష తెలుగులో సెట్ చేయబడింది!',
+      'fr': 'Langue définie en français!',
+      'de': 'Sprache auf Deutsch eingestellt!',
+      'es': '¡Idioma configurado en español!'
+    };
+    showToast(messages[lang] || 'Language updated!');
+  }
+
+  // ── Save Settings ─────────────────────────
+  function saveSetting(key, value) {
+    localStorage.setItem(key, value);
+    showToast(value ? '✅ Enabled!' : '❌ Disabled!');
+  }
+
+  // Load saved notification settings
+  const pushSaved = localStorage.getItem('push_notifications');
+  const emailSaved = localStorage.getItem('email_alerts');
+  if (pushSaved === 'false') document.getElementById('push-toggle').checked = false;
+  if (emailSaved === 'false') document.getElementById('email-toggle').checked = false;
+
+  // ── Toast Notification ────────────────────
+  function showToast(msg) {
+    const toast = document.createElement('div');
+    toast.textContent = msg;
+    toast.style.cssText = `
+      position:fixed; bottom:80px; left:50%; transform:translateX(-50%);
+      background:#111827; color:#fff; padding:10px 20px;
+      border-radius:8px; font-size:13px; z-index:999;
+      animation: fadeIn 0.3s ease;
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
+  }
+
+  // ── Push Notification Permission ──────────
+  document.getElementById('push-toggle').addEventListener('change', function() {
+    if (this.checked && 'Notification' in window) {
+      Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+          showToast('✅ Push notifications enabled!');
+        } else {
+          showToast('❌ Permission denied by browser.');
+          this.checked = false;
+        }
+      });
+    }
+    saveSetting('push_notifications', this.checked);
+  });
+</script>
+
+<!-- Dark Mode CSS -->
+<style>
+  body.dark { background: #111827 !important; color: #f9fafb !important; }
+  body.dark .header { background: #1f2937 !important; border-color: #374151 !important; }
+  body.dark .header-title { color: #9ca3af !important; }
+  body.dark .card { background: #1f2937 !important; border-color: #374151 !important; }
+  body.dark .settings-item { background: #1f2937 !important; border-color: #374151 !important; }
+  body.dark .settings-label { color: #f9fafb !important; }
+  body.dark .settings-sub { color: #9ca3af !important; }
+  body.dark .settings-title { color: #f9fafb !important; }
+  body.dark .page-title { color: #f9fafb !important; }
+  body.dark .page-subtitle { color: #9ca3af !important; }
+  body.dark .form-control { background: #374151 !important; border-color: #4b5563 !important; color: #f9fafb !important; }
+  body.dark .bottom-nav { background: #1f2937 !important; border-color: #374151 !important; }
+  body.dark .nav-item { color: #6b7280 !important; }
+  body.dark .nav-item.active { color: #2563eb !important; }
+  body.dark .book-card { background: #1f2937 !important; border-color: #374151 !important; }
+  body.dark .book-title { color: #f9fafb !important; }
+  body.dark .tab { background: #1f2937 !important; border-color: #374151 !important; color: #9ca3af !important; }
+  body.dark .tab.active { background: #2563eb !important; color: #fff !important; }
+  body.dark #sidebar { background: #1f2937 !important; }
+  body.dark .fine-row { border-color: #374151 !important; }
+  body.dark .fine-name { color: #f9fafb !important; }
+  body.dark .stat-card { background: #1f2937 !important; border-color: #374151 !important; }
+  body.dark .stat-value { color: #f9fafb !important; }
+  body.dark .member-card { border-color: #374151 !important; }
+  body.dark .member-name { color: #f9fafb !important; }
+</style>
+
 {% endblock %}

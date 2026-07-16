@@ -200,21 +200,19 @@ def librarian_login():
 
         if user is None:
             flash("User not found.", "danger")
-            return render_template("librarian_login.html")
 
-        if not user.check_password(password):
+        elif not user.check_password(password):
             flash("Incorrect password.", "danger")
-            return render_template("librarian_login.html")
 
-        if user.role != "librarian":
+        elif user.role != "librarian":
             flash(f"Your role is '{user.role}', not librarian.", "danger")
-            return render_template("librarian_login.html")
 
-        login_user(user)
-        flash(f"Welcome Librarian {user.name}!", "success")
-        return redirect(url_for("main.librarian_desk"))
+        else:
+            login_user(user)
+            flash(f"Welcome Librarian {user.name}!", "success")
+            return redirect(url_for('main.librarian_desk'))
 
-    return render_template("librarian_login.html")
+    return render_template('librarian_login.html')
 
 
 # ─── Google OAuth ──────────────────────────────────

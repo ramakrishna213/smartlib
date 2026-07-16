@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  body { background: #f0f9ff !important; }
+  .lib-login {
+    min-height: 100vh; display: flex; flex-direction: column;
+    justify-content: center; padding: 32px 24px;
+    max-width: 480px; margin: 0 auto;
+  }
+  .lib-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; }
+  .lib-logo-icon {
+    width: 44px; height: 44px; background: #0369a1;
+    border-radius: 12px; display: flex; align-items: center;
+    justify-content: center; color: #fff; font-size: 20px;
+  }
+  .lib-logo-text { font-size: 22px; font-weight: 700; color: #0c4a6e; }
+  .lib-badge {
+    background: #0369a1; color: #fff; font-size: 11px;
+    font-weight: 600; padding: 3px 10px; border-radius: 20px;
+    margin-left: 8px;
+  }
+  .lib-title { font-size: 26px; font-weight: 700; color: #0c4a6e; margin-bottom: 6px; }
+  .lib-sub { font-size: 14px; color: #64748b; margin-bottom: 28px; }
+  .lib-form-control {
+    width: 100%; padding: 12px 14px; border-radius: 10px;
+    border: 1.5px solid #bae6fd; font-size: 14px;
+    background: #fff; color: #0c4a6e; outline: none;
+    transition: border-color 0.2s; font-family: 'Inter', sans-serif;
+  }
+  .lib-form-control:focus { border-color: #0369a1; }
+  .lib-form-label { font-size: 13px; font-weight: 500; color: #0369a1; margin-bottom: 6px; display: block; }
+  .lib-btn {
+    width: 100%; padding: 12px; border-radius: 10px;
+    background: #0369a1; color: #fff; border: none;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .lib-btn:hover { background: #0284c7; }
+  .lib-card {
+    background: #fff; border: 1px solid #bae6fd;
+    border-radius: 16px; padding: 28px;
+    box-shadow: 0 4px 20px rgba(3,105,161,0.1);
+  }
+  .pw-wrap { position: relative; }
+  .pw-wrap .lib-form-control { padding-right: 44px; }
+  .pw-toggle {
+    position: absolute; right: 14px; top: 50%;
+    transform: translateY(-50%); background: none;
+    border: none; color: #64748b; cursor: pointer; font-size: 16px;
+  }
+  .back-link { text-align: center; margin-top: 20px; font-size: 13px; color: #64748b; }
+  .back-link a { color: #0369a1; font-weight: 600; text-decoration: none; }
+  .info-note {
+    display: flex; align-items: center; gap: 8px;
+    background: #e0f2fe; border: 1px solid #bae6fd;
+    border-radius: 10px; padding: 10px 14px;
+    margin-bottom: 20px; font-size: 12px; color: #0369a1;
+  }
+</style>
+
+<div class="lib-login">
+  <!-- Logo -->
+  <div class="lib-logo">
+    <div class="lib-logo-icon"><i class="fa-solid fa-book-open"></i></div>
+    <span class="lib-logo-text">SmartLib</span>
+    <span class="lib-badge">LIBRARIAN</span>
+  </div>
+
+  <h1 class="lib-title">Librarian Portal</h1>
+  <p class="lib-sub">Access your librarian desk and manage daily operations.</p>
+
+  <!-- Info Note -->
+  <div class="info-note">
+    <i class="fa-solid fa-circle-info"></i>
+    Use your librarian credentials to access the desk.
+  </div>
+
+  <div class="lib-card">
+    <form method="POST" action="{{ url_for('auth.librarian_login') }}">
+      <div style="margin-bottom:16px">
+        <label class="lib-form-label">Librarian Email</label>
+        <input type="email" name="email" class="lib-form-control"
+               placeholder="Enter librarian email" required>
+      </div>
+
+      <div style="margin-bottom:20px">
+        <label class="lib-form-label">Password</label>
+        <div class="pw-wrap">
+          <input type="password" name="password" id="pw"
+                 class="lib-form-control" placeholder="••••••••" required>
+          <button type="button" class="pw-toggle" onclick="togglePw()">
+            <i class="fa-regular fa-eye" id="eye-icon"></i>
+          </button>
+        </div>
+      </div>
+
+      <button type="submit" class="lib-btn">
+        <i class="fa-solid fa-book-open"></i> Access Librarian Desk
+      </button>
+    </form>
+  </div>
+
+  <div class="back-link">
+    Not a librarian? <a href="{{ url_for('auth.login') }}">Member Login</a> |
+    <a href="{{ url_for('auth.admin_login') }}">Admin Login</a>
+  </div>
+</div>
+
+<script>
+  function togglePw() {
+    const pw = document.getElementById('pw');
+    const icon = document.getElementById('eye-icon');
+    if (pw.type === 'password') {
+      pw.type = 'text';
+      icon.className = 'fa-regular fa-eye-slash';
+    } else {
+      pw.type = 'password';
+      icon.className = 'fa-regular fa-eye';
+    }
+  }
+</script>
+{% endblock %}

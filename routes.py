@@ -163,18 +163,26 @@ def admin_login():
             select(m().User).where(m().User.email == email)
         ).scalar_one_or_none()
 
-        if user and user.check_password(password) and user.role == 'admin':
-            login_user(user)
-            flash(f'Welcome Admin {user.name}!', 'success')
-            return redirect(url_for('main.admin_dashboard'))
+        if user is None:
+            flash('Admin account not found.', 'danger')
+            return render_template('admin_login.html')
 
-        flash('Invalid admin credentials.', 'danger')
+        if not user.check_password(password):
+            flash('Incorrect password.', 'danger')
+            return render_template('admin_login.html')
+
+        if user.role.lower() != 'admin':
+            flash(f'Access denied. Your role is "{user.role}".', 'danger')
+            return render_template('admin_login.html')
+
+        login_user(user)
+        flash(f'Welcome Admin {user.name}!', 'success')
+        return redirect(url_for('main.admin_dashboard'))
 
     return render_template('admin_login.html')
 
 
 # ─── Librarian Login ───────────────────────────────
-
 @auth.route('/librarian/login', methods=['GET', 'POST'])
 def librarian_login():
     if current_user.is_authenticated:
@@ -190,14 +198,23 @@ def librarian_login():
             select(m().User).where(m().User.email == email)
         ).scalar_one_or_none()
 
-        if user and user.check_password(password) and user.role == 'librarian':
-            login_user(user)
-            flash(f'Welcome Librarian {user.name}!', 'success')
-            return redirect(url_for('main.librarian_desk'))
+        if user is None:
+            flash("User not found.", "danger")
+            return render_template("librarian_login.html")
 
-        flash('Invalid librarian credentials.', 'danger')
+        if not user.check_password(password):
+            flash("Incorrect password.", "danger")
+            return render_template("librarian_login.html")
 
-    return render_template('librarian_login.html')
+        if user.role != "librarian":
+            flash(f"Your role is '{user.role}', not librarian.", "danger")
+            return render_template("librarian_login.html")
+
+        login_user(user)
+        flash(f"Welcome Librarian {user.name}!", "success")
+        return redirect(url_for("main.librarian_desk"))
+
+    return render_template("librarian_login.html")
 
 
 # ─── Google OAuth ──────────────────────────────────

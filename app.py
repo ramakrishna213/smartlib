@@ -67,53 +67,113 @@ def _seed():
     from sqlalchemy import select
     from werkzeug.security import generate_password_hash
 
-    User        = m.User
-    Book        = m.Book
-    Category    = m.Category
-    Fine        = m.Fine
-    IssuedBook  = m.IssuedBook
-    Notification = m.Notification
+    User = m.User
+    Book = m.Book
+    Category = m.Category
 
-    if db.session.execute(select(User)).first():
-        return
+    # ---------- Create Categories ----------
+    for name in ['Technology', 'Science', 'Fiction', 'Engineering', 'Business', 'Arts']:
+        existing = db.session.execute(
+            select(Category).where(Category.name == name)
+        ).scalar_one_or_none()
 
-    for name in ['Technology','Science','Fiction','Engineering','Business','Arts']:
-        db.session.add(Category(name=name))
-    db.session.flush()
-
-    db.session.add(User(name='Admin User', email='admin@smartlib.com',
-        role='admin', password_hash=generate_password_hash('admin123')))
-    db.session.add(User(name='Librarian One', email='librarian@smartlib.com',
-        role='librarian', password_hash=generate_password_hash('lib123')))
-
-    for name, email, sid, dept in [
-        ('Alex Chen',    'alex@example.com',  'STU-2024-001', 'Computer Science'),
-        ('Sarah Johnson','sarah@example.com', 'STU-2024-042', 'Engineering'),
-        ('Mike Smith',   'mike@example.com',  'STU-2023-115', 'Business'),
-        ('Emma Davis',   'emma@example.com',  'STU-2023-089', 'Arts'),
-    ]:
-        db.session.add(User(name=name, email=email, role='member',
-            student_id=sid, department=dept,
-            password_hash=generate_password_hash('member123')))
-    db.session.flush()
-
-    tech    = db.session.execute(select(Category).where(Category.name=='Technology')).scalar_one()
-    fiction = db.session.execute(select(Category).where(Category.name=='Fiction')).scalar_one()
-
-    for title, author, cat, year, rating, qty in [
-        ('The Pragmatic Programmer','David Thomas',        tech.id,    2019,4.8,3),
-        ('Clean Code',              'Robert C. Martin',    tech.id,    2008,4.7,2),
-        ('Design Patterns',         'Gang of Four',        tech.id,    1994,4.6,2),
-        ('Refactoring',             'Martin Fowler',       tech.id,    2018,4.5,1),
-        ('The Great Gatsby',        'F. Scott Fitzgerald', fiction.id, 1925,4.3,3),
-        ('1984',                    'George Orwell',       fiction.id, 1949,4.9,2),
-    ]:
-        db.session.add(Book(title=title, author=author, category_id=cat,
-            publication_year=year, rating=rating,
-            total_quantity=qty, available_qty=qty))
+        if not existing:
+            db.session.add(Category(name=name))
 
     db.session.commit()
-    print("✅ Database seeded!")
+
+    # ---------- Create Admin ----------
+    admin = db.session.execute(
+        select(User).where(User.email == 'admin@smartlib.com')
+    ).scalar_one_or_none()
+
+    if not admin:
+        admin = User(
+            name='Admin User',
+            email='admin@smartlib.com',
+            role='admin',
+            password_hash=generate_password_hash('admin123')
+        )
+        db.session.add(admin)
+
+    # ---------- Create Librarian ----------
+    librarian = db.session.execute(
+        select(User).where(User.email == 'librarian@smartlib.com')
+    ).scalar_one_or_none()
+
+    if not librarian:
+        librarian = User(
+            name='Librarian One',
+            email='librarian@smartlib.com',
+            role='librarian',
+            password_hash=generate_password_hash('lib123')
+        )
+        db.session.add(librarian)
+
+    db.session.commit()
+
+    # ---------- Create Sample Members ----------
+    members = [
+        ('Alex Chen', 'alex@example.com', 'STU-2024-001', 'Computer Science'),
+        ('Sarah Johnson', 'sarah@example.com', 'STU-2024-042', 'Engineering'),
+        ('Mike Smith', 'mike@example.com', 'STU-2023-115', 'Business'),
+        ('Emma Davis', 'emma@example.com', 'STU-2023-089', 'Arts')
+    ]
+
+    for name, email, sid, dept in members:
+        existing = db.session.execute(
+            select(User).where(User.email == email)
+        ).scalar_one_or_none()
+
+        if not existing:
+            db.session.add(User(
+                name=name,
+                email=email,
+                role='member',
+                student_id=sid,
+                department=dept,
+                password_hash=generate_password_hash('member123')
+            ))
+
+    db.session.commit()
+
+    # ---------- Create Sample Books ----------
+    tech = db.session.execute(
+        select(Category).where(Category.name == 'Technology')
+    ).scalar_one()
+
+    fiction = db.session.execute(
+        select(Category).where(Category.name == 'Fiction')
+    ).scalar_one()
+
+    books = [
+        ('The Pragmatic Programmer', 'David Thomas', tech.id, 2019, 4.8, 3),
+        ('Clean Code', 'Robert C. Martin', tech.id, 2008, 4.7, 2),
+        ('Design Patterns', 'Gang of Four', tech.id, 1994, 4.6, 2),
+        ('Refactoring', 'Martin Fowler', tech.id, 2018, 4.5, 1),
+        ('The Great Gatsby', 'F. Scott Fitzgerald', fiction.id, 1925, 4.3, 3),
+        ('1984', 'George Orwell', fiction.id, 1949, 4.9, 2),
+    ]
+
+    for title, author, cat, year, rating, qty in books:
+        existing = db.session.execute(
+            select(Book).where(Book.title == title)
+        ).scalar_one_or_none()
+
+        if not existing:
+            db.session.add(Book(
+                title=title,
+                author=author,
+                category_id=cat,
+                publication_year=year,
+                rating=rating,
+                total_quantity=qty,
+                available_qty=qty
+            ))
+
+    db.session.commit()
+
+    print("✅ SmartLib seeded successfully!")
 
 
 if __name__ == '__main__':

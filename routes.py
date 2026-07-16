@@ -109,6 +109,46 @@ def register():
     return render_template('register.html')
 
 
+# ─── Admin Login ───────────────────────────────────
+@auth.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    if current_user.is_authenticated:
+        return redirect(url_for('main.dashboard'))
+    if request.method == 'POST':
+        email    = request.form.get('email')
+        password = request.form.get('password')
+        session  = db().session
+        user = session.execute(
+            select(m().User).where(m().User.email == email)
+        ).scalar_one_or_none()
+        if user and user.check_password(password) and user.role == 'admin':
+            login_user(user)
+            flash(f'Welcome Admin {user.name}!', 'success')
+            return redirect(url_for('main.admin_dashboard'))
+        flash('Invalid admin credentials.', 'danger')
+    return render_template('admin_login.html')
+
+
+# ─── Librarian Login ───────────────────────────────
+@auth.route('/librarian/login', methods=['GET', 'POST'])
+def librarian_login():
+    if current_user.is_authenticated:
+        return redirect(url_for('main.dashboard'))
+    if request.method == 'POST':
+        email    = request.form.get('email')
+        password = request.form.get('password')
+        session  = db().session
+        user = session.execute(
+            select(m().User).where(m().User.email == email)
+        ).scalar_one_or_none()
+        if user and user.check_password(password) and user.role == 'librarian':
+            login_user(user)
+            flash(f'Welcome Librarian {user.name}!', 'success')
+            return redirect(url_for('main.librarian_desk'))
+        flash('Invalid librarian credentials.', 'danger')
+    return render_template('librarian_login.html')
+
+
 # ─── Google OAuth ──────────────────────────────────
 @auth.route('/auth/google')
 def google_login():
@@ -162,11 +202,9 @@ def github_callback():
     github  = current_app.extensions['github_oauth']
     token   = github.authorize_access_token()
 
-    # Get user profile
     user_resp = github.get('user', token=token)
     info      = user_resp.json()
 
-    # Get email (may be private)
     email = info.get('email')
     if not email:
         emails_resp = github.get('user/emails', token=token)
@@ -435,23 +473,16 @@ def members():
     search     = request.args.get('search', '')
     department = request.args.get('department', '')
     stmt = select(m().User).where(m().User.role == 'member')
-
     if search:
         stmt = stmt.where(m().User.name.ilike(f'%{search}%'))
-
     if department:
         stmt = stmt.where(m().User.department == department)
-
     all_members = session.execute(stmt).scalars().all()
     depts = session.execute(
         select(m().User.department).where(m().User.role == 'member').distinct()
     ).scalars().all()
-
-    return render_template(
-        'members.html',
-        members=all_members,
-        departments=[d for d in depts if d]
-    )
+    return render_template('members.html', members=all_members,
+                           departments=[d for d in depts if d])
 
 
 # ─── Add Member ────────────────────────────────────
@@ -460,37 +491,29 @@ def members():
 @librarian_required
 def add_member():
     session = db().session
-
     if request.method == 'POST':
-        name = request.form.get('name')
-        email = request.form.get('email')
+        name       = request.form.get('name')
+        email      = request.form.get('email')
         student_id = request.form.get('student_id')
         department = request.form.get('department')
-        password = request.form.get('password')
+        password   = request.form.get('password')
 
         existing = session.execute(
             select(m().User).where(m().User.email == email)
         ).scalar_one_or_none()
-
         if existing:
             flash('Email already exists.', 'danger')
             return redirect(url_for('main.add_member'))
 
         user = m().User(
-            name=name,
-            email=email,
-            role='member',
-            student_id=student_id,
-            department=department,
+            name=name, email=email, role='member',
+            student_id=student_id, department=department,
             password_hash=generate_password_hash(password)
         )
-
         session.add(user)
         session.commit()
-
         flash('Member added successfully!', 'success')
         return redirect(url_for('main.members'))
-
     return render_template('add_member.html')
 
 

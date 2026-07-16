@@ -64,10 +64,6 @@ def login():
         email = request.form.get('email', '').strip().lower()
         password = request.form.get('password', '')
 
-        if not email or not password:
-            flash('Please enter both email and password.', 'warning')
-            return render_template('login.html')
-
         session = db().session
 
         user = session.execute(
@@ -82,16 +78,17 @@ def login():
             flash('Incorrect password.', 'danger')
             return render_template('login.html')
 
-        if user.role != 'member':
-            flash('Please use the correct login portal.', 'warning')
+        # Member login should only allow members
+        if user.role == 'admin':
+            flash('Please login through the Admin portal.', 'warning')
+            return redirect(url_for('auth.admin_login'))
 
-            if user.role == 'admin':
-                return redirect(url_for('auth.admin_login'))
-            elif user.role == 'librarian':
-                return redirect(url_for('auth.librarian_login'))
+        if user.role == 'librarian':
+            flash('Please login through the Librarian portal.', 'warning')
+            return redirect(url_for('auth.librarian_login'))
 
         login_user(user, remember=('remember' in request.form))
-        flash(f'Welcome back, {user.name}!', 'success')
+        flash(f'Welcome {user.name}!', 'success')
         return redirect(url_for('main.dashboard'))
 
     return render_template('login.html')
@@ -185,8 +182,9 @@ def admin_login():
 # ─── Librarian Login ───────────────────────────────
 @auth.route('/librarian/login', methods=['GET', 'POST'])
 def librarian_login():
+
     if current_user.is_authenticated:
-        return redirect(url_for('main.librarian_desk'))
+        logout_user()
 
     if request.method == 'POST':
         email = request.form.get('email', '').strip().lower()
@@ -199,18 +197,21 @@ def librarian_login():
         ).scalar_one_or_none()
 
         if user is None:
-            flash("User not found.", "danger")
+            flash("Librarian account not found.", "danger")
+            return render_template('librarian_login.html')
 
-        elif not user.check_password(password):
+        if not user.check_password(password):
             flash("Incorrect password.", "danger")
+            return render_template('librarian_login.html')
 
-        elif user.role != "librarian":
-            flash(f"Your role is '{user.role}', not librarian.", "danger")
+        # Allow librarian and admin
+        if user.role not in ['librarian', 'admin']:
+            flash("This account is not authorized as a librarian.", "danger")
+            return render_template('librarian_login.html')
 
-        else:
-            login_user(user)
-            flash(f"Welcome Librarian {user.name}!", "success")
-            return redirect(url_for('main.librarian_desk'))
+        login_user(user)
+        flash(f"Welcome {user.name}!", "success")
+        return redirect(url_for('main.librarian_desk'))
 
     return render_template('librarian_login.html')
 

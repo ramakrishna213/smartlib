@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SmartLib - Librarian Login</title>
+  <title>SmartLib - Admin Login</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, #0c4a6e 0%, #0369a1 100%);
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
       min-height: 100vh; display: flex;
       align-items: center; justify-content: center;
       padding: 24px;
@@ -19,54 +19,58 @@
 
     .logo { display: flex; align-items: center; gap: 12px; margin-bottom: 32px; justify-content: center; }
     .logo-icon {
-      width: 48px; height: 48px; background: #fff;
+      width: 48px; height: 48px; background: #7c3aed;
       border-radius: 14px; display: flex; align-items: center;
-      justify-content: center; color: #0369a1; font-size: 22px;
-      box-shadow: 0 0 20px rgba(255,255,255,0.3);
+      justify-content: center; color: #fff; font-size: 22px;
+      box-shadow: 0 0 20px rgba(124,58,237,0.5);
     }
-    .logo-text { font-size: 24px; font-weight: 700; color: #fff; }
+    .logo-text { font-size: 24px; font-weight: 700; color: #f1f5f9; }
     .badge {
-      background: rgba(255,255,255,0.2); color: #fff;
-      font-size: 10px; font-weight: 700; padding: 3px 8px;
-      border-radius: 20px; letter-spacing: 1px;
-      border: 1px solid rgba(255,255,255,0.3);
+      background: #7c3aed; color: #fff; font-size: 10px;
+      font-weight: 700; padding: 3px 8px; border-radius: 20px;
+      letter-spacing: 1px;
     }
 
     .card {
-      background: #fff; border-radius: 20px; padding: 32px;
-      box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+      background: rgba(30, 41, 59, 0.9);
+      border: 1px solid rgba(124,58,237,0.3);
+      border-radius: 20px; padding: 32px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 25px 50px rgba(0,0,0,0.5);
     }
-    .card-title { font-size: 24px; font-weight: 700; color: #0c4a6e; margin-bottom: 4px; }
-    .card-sub { font-size: 14px; color: #64748b; margin-bottom: 24px; }
+    .card-title { font-size: 24px; font-weight: 700; color: #f1f5f9; margin-bottom: 4px; }
+    .card-sub { font-size: 14px; color: #94a3b8; margin-bottom: 24px; }
 
-    .info-note {
+    .security-note {
       display: flex; align-items: center; gap: 10px;
-      background: #e0f2fe; border: 1px solid #bae6fd;
+      background: rgba(124,58,237,0.15);
+      border: 1px solid rgba(124,58,237,0.3);
       border-radius: 10px; padding: 10px 14px;
-      margin-bottom: 20px; font-size: 12px; color: #0369a1;
+      margin-bottom: 20px; font-size: 12px; color: #a78bfa;
     }
 
     .flash { padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; font-weight: 500; }
-    .flash.danger { background: #fee2e2; color: #991b1b; }
-    .flash.success { background: #dcfce7; color: #166534; }
+    .flash.danger { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+    .flash.success { background: rgba(34,197,94,0.15); color: #86efac; border: 1px solid rgba(34,197,94,0.3); }
 
     .form-group { margin-bottom: 18px; }
-    .form-label { font-size: 13px; font-weight: 500; color: #0369a1; margin-bottom: 8px; display: block; }
+    .form-label { font-size: 13px; font-weight: 500; color: #94a3b8; margin-bottom: 8px; display: block; }
     .form-control {
       width: 100%; padding: 13px 16px; border-radius: 10px;
-      border: 1.5px solid #bae6fd; background: #f0f9ff;
-      color: #0c4a6e; font-size: 14px; outline: none;
+      border: 1.5px solid rgba(124,58,237,0.3);
+      background: rgba(15, 23, 42, 0.8);
+      color: #f1f5f9; font-size: 14px; outline: none;
       transition: border-color 0.2s; font-family: 'Inter', sans-serif;
     }
-    .form-control:focus { border-color: #0369a1; box-shadow: 0 0 0 3px rgba(3,105,161,0.1); background: #fff; }
-    .form-control::placeholder { color: #94a3b8; }
+    .form-control:focus { border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124,58,237,0.1); }
+    .form-control::placeholder { color: #475569; }
 
     .pw-wrap { position: relative; }
     .pw-wrap .form-control { padding-right: 46px; }
     .pw-toggle {
       position: absolute; right: 14px; top: 50%;
       transform: translateY(-50%); background: none;
-      border: none; color: #94a3b8; cursor: pointer; font-size: 16px;
+      border: none; color: #475569; cursor: pointer; font-size: 16px;
     }
 
     .btn {
@@ -75,18 +79,18 @@
       cursor: pointer; display: flex; align-items: center;
       justify-content: center; gap: 8px; transition: all 0.2s;
     }
-    .btn-lib { background: linear-gradient(135deg, #0369a1, #0284c7); color: #fff; }
-    .btn-lib:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(3,105,161,0.4); }
+    .btn-admin { background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; }
+    .btn-admin:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(124,58,237,0.4); }
 
     .links { text-align: center; margin-top: 20px; display: flex; gap: 12px; justify-content: center; }
     .link-btn {
       font-size: 12px; padding: 8px 16px; border-radius: 8px;
       text-decoration: none; font-weight: 500; transition: all 0.2s;
     }
-    .link-admin { color: #7c3aed; border: 1px solid rgba(124,58,237,0.3); }
-    .link-admin:hover { background: rgba(124,58,237,0.05); }
-    .link-mem { color: #64748b; border: 1px solid #e2e8f0; }
-    .link-mem:hover { background: #f8fafc; }
+    .link-lib { color: #38bdf8; border: 1px solid rgba(56,189,248,0.3); }
+    .link-lib:hover { background: rgba(56,189,248,0.1); }
+    .link-mem { color: #94a3b8; border: 1px solid rgba(148,163,184,0.3); }
+    .link-mem:hover { background: rgba(148,163,184,0.1); }
   </style>
 </head>
 <body>
@@ -94,19 +98,19 @@
 
   <!-- Logo -->
   <div class="logo">
-    <div class="logo-icon"><i class="fa-solid fa-book-open"></i></div>
+    <div class="logo-icon"><i class="fa-solid fa-shield-halved"></i></div>
     <span class="logo-text">SmartLib</span>
-    <span class="badge">LIBRARIAN</span>
+    <span class="badge">ADMIN</span>
   </div>
 
   <div class="card">
-    <h1 class="card-title">Librarian Portal</h1>
-    <p class="card-sub">Access your librarian desk and manage daily operations.</p>
+    <h1 class="card-title">Admin Portal</h1>
+    <p class="card-sub">Secure access for system administrators only.</p>
 
-    <!-- Info Note -->
-    <div class="info-note">
-      <i class="fa-solid fa-circle-info"></i>
-      Use your librarian credentials to access the desk.
+    <!-- Security Note -->
+    <div class="security-note">
+      <i class="fa-solid fa-lock"></i>
+      Restricted to authorized administrators only.
     </div>
 
     <!-- Flash Messages -->
@@ -118,11 +122,11 @@
       {% endif %}
     {% endwith %}
 
-    <form method="POST" action="{{ url_for('auth.librarian_login') }}">
+    <form method="POST" action="{{ url_for('auth.admin_login') }}">
       <div class="form-group">
-        <label class="form-label">Librarian Email</label>
+        <label class="form-label">Admin Email</label>
         <input type="email" name="email" class="form-control"
-               placeholder="librarian@smartlib.com" required>
+               placeholder="admin@smartlib.com" required>
       </div>
 
       <div class="form-group">
@@ -136,14 +140,14 @@
         </div>
       </div>
 
-      <button type="submit" class="btn btn-lib">
-        <i class="fa-solid fa-book-open"></i> Access Librarian Desk
+      <button type="submit" class="btn btn-admin">
+        <i class="fa-solid fa-shield-halved"></i> Access Admin Panel
       </button>
     </form>
 
     <div class="links">
-      <a href="{{ url_for('auth.admin_login') }}" class="link-btn link-admin">
-        <i class="fa-solid fa-shield-halved"></i> Admin Login
+      <a href="{{ url_for('auth.librarian_login') }}" class="link-btn link-lib">
+        <i class="fa-solid fa-book-open"></i> Librarian Login
       </a>
       <a href="{{ url_for('auth.login') }}" class="link-btn link-mem">
         <i class="fa-solid fa-user"></i> Member Login

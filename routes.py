@@ -45,6 +45,7 @@ def librarian_required(f):
 
 
 # ─── Auth ──────────────────────────────────────────
+
 @auth.route('/')
 def index():
     if current_user.is_authenticated:
@@ -52,24 +53,51 @@ def index():
     return redirect(url_for('auth.login'))
 
 
+# ─── Member Login ──────────────────────────────────
+
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('main.dashboard'))
+
     if request.method == 'POST':
-        email    = request.form.get('email')
-        password = request.form.get('password')
-        session  = db().session
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+
+        if not email or not password:
+            flash('Please enter both email and password.', 'warning')
+            return render_template('login.html')
+
+        session = db().session
+
         user = session.execute(
             select(m().User).where(m().User.email == email)
         ).scalar_one_or_none()
-        if user and user.check_password(password):
-            login_user(user)
-            flash(f'Welcome back, {user.name}!', 'success')
-            return redirect(url_for('main.dashboard'))
-        flash('Invalid email or password.', 'danger')
+
+        if user is None:
+            flash('User not found.', 'danger')
+            return render_template('login.html')
+
+        if not user.check_password(password):
+            flash('Incorrect password.', 'danger')
+            return render_template('login.html')
+
+        if user.role != 'member':
+            flash('Please use the correct login portal.', 'warning')
+
+            if user.role == 'admin':
+                return redirect(url_for('auth.admin_login'))
+            elif user.role == 'librarian':
+                return redirect(url_for('auth.librarian_login'))
+
+        login_user(user, remember=('remember' in request.form))
+        flash(f'Welcome back, {user.name}!', 'success')
+        return redirect(url_for('main.dashboard'))
+
     return render_template('login.html')
 
+
+# ─── Logout ────────────────────────────────────────
 
 @auth.route('/logout')
 @login_required
@@ -79,73 +107,96 @@ def logout():
     return redirect(url_for('auth.login'))
 
 
+# ─── Register ──────────────────────────────────────
+
 @auth.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        session    = db().session
-        name       = request.form.get('name')
-        email      = request.form.get('email')
-        password   = request.form.get('password')
+        session = db().session
+
+        name = request.form.get('name')
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password')
         student_id = request.form.get('student_id')
         department = request.form.get('department')
 
         existing = session.execute(
             select(m().User).where(m().User.email == email)
         ).scalar_one_or_none()
+
         if existing:
             flash('Email already registered.', 'danger')
             return redirect(url_for('auth.register'))
 
         user = m().User(
-            name=name, email=email, role='member',
+            name=name,
+            email=email,
+            role='member',
             student_id=student_id or None,
             department=department,
             password_hash=generate_password_hash(password)
         )
+
         session.add(user)
         session.commit()
+
         flash('Account created! Please login.', 'success')
         return redirect(url_for('auth.login'))
+
     return render_template('register.html')
 
 
 # ─── Admin Login ───────────────────────────────────
+
 @auth.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
     if current_user.is_authenticated:
-        return redirect(url_for('main.dashboard'))
+        return redirect(url_for('main.admin_dashboard'))
+
     if request.method == 'POST':
-        email    = request.form.get('email')
-        password = request.form.get('password')
-        session  = db().session
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+
+        session = db().session
+
         user = session.execute(
             select(m().User).where(m().User.email == email)
         ).scalar_one_or_none()
+
         if user and user.check_password(password) and user.role == 'admin':
             login_user(user)
             flash(f'Welcome Admin {user.name}!', 'success')
             return redirect(url_for('main.admin_dashboard'))
+
         flash('Invalid admin credentials.', 'danger')
+
     return render_template('admin_login.html')
 
 
 # ─── Librarian Login ───────────────────────────────
+
 @auth.route('/librarian/login', methods=['GET', 'POST'])
 def librarian_login():
     if current_user.is_authenticated:
-        return redirect(url_for('main.dashboard'))
+        return redirect(url_for('main.librarian_desk'))
+
     if request.method == 'POST':
-        email    = request.form.get('email')
-        password = request.form.get('password')
-        session  = db().session
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+
+        session = db().session
+
         user = session.execute(
             select(m().User).where(m().User.email == email)
         ).scalar_one_or_none()
+
         if user and user.check_password(password) and user.role == 'librarian':
             login_user(user)
             flash(f'Welcome Librarian {user.name}!', 'success')
             return redirect(url_for('main.librarian_desk'))
+
         flash('Invalid librarian credentials.', 'danger')
+
     return render_template('librarian_login.html')
 
 

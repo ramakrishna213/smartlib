@@ -1,58 +1,211 @@
-{% extends "base.html" %}
-{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartLib - Member Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      min-height: 100vh; display: flex;
+      align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .container { width: 100%; max-width: 420px; }
 
-<!-- Email -->
-<div class="form-group">
-  <label class="form-label">Email</label>
-  <input type="email" name="email" class="form-control"
-         placeholder="Enter your email" required>
-</div>
+    .logo { display: flex; align-items: center; gap: 12px; margin-bottom: 32px; justify-content: center; }
+    .logo-icon {
+      width: 48px; height: 48px; background: #2563eb;
+      border-radius: 14px; display: flex; align-items: center;
+      justify-content: center; color: #fff; font-size: 22px;
+      box-shadow: 0 8px 20px rgba(37,99,235,0.3);
+    }
+    .logo-text { font-size: 24px; font-weight: 700; color: #1e3a8a; }
 
-<!-- Password -->
-<div class="form-group">
-  <label class="form-label">Password</label>
-  <div class="pw-wrap">
-    <input type="password" name="password" id="pw"
-           class="form-control" placeholder="••••••••" required>
-    <button type="button" class="pw-toggle" onclick="togglePw()">
-      <i class="fa-regular fa-eye" id="eye-icon"></i>
-    </button>
+    .card {
+      background: #fff; border-radius: 20px; padding: 32px;
+      box-shadow: 0 20px 40px rgba(37,99,235,0.1);
+      border: 1px solid #e0e7ff;
+    }
+    .card-title { font-size: 24px; font-weight: 700; color: #111827; margin-bottom: 4px; }
+    .card-sub { font-size: 14px; color: #6b7280; margin-bottom: 24px; }
+
+    .flash { padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; font-weight: 500; }
+    .flash.danger { background: #fee2e2; color: #991b1b; }
+    .flash.success { background: #dcfce7; color: #166534; }
+
+    .form-group { margin-bottom: 16px; }
+    .form-label { font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 8px; display: block; }
+    .form-control {
+      width: 100%; padding: 13px 16px; border-radius: 10px;
+      border: 1.5px solid #e5e7eb; background: #fff;
+      color: #111827; font-size: 14px; outline: none;
+      transition: border-color 0.2s; font-family: 'Inter', sans-serif;
+    }
+    .form-control:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+    .form-control::placeholder { color: #9ca3af; }
+    select.form-control { appearance: none; cursor: pointer; }
+
+    .pw-wrap { position: relative; }
+    .pw-wrap .form-control { padding-right: 46px; }
+    .pw-toggle {
+      position: absolute; right: 14px; top: 50%;
+      transform: translateY(-50%); background: none;
+      border: none; color: #9ca3af; cursor: pointer; font-size: 16px;
+    }
+
+    .remember-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .remember-row label {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; color: #374151; cursor: pointer;
+    }
+    .forgot { font-size: 13px; color: #2563eb; text-decoration: none; font-weight: 500; }
+
+    .btn {
+      width: 100%; padding: 14px; border-radius: 10px;
+      border: none; font-size: 15px; font-weight: 600;
+      cursor: pointer; display: flex; align-items: center;
+      justify-content: center; gap: 8px; transition: all 0.2s;
+    }
+    .btn-member { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; }
+    .btn-member:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(37,99,235,0.3); }
+
+    .divider {
+      display: flex; align-items: center; gap: 12px;
+      margin: 20px 0; color: #9ca3af; font-size: 13px;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1; height: 1px; background: #e5e7eb;
+    }
+
+    .social-btns { display: flex; gap: 10px; margin-bottom: 16px; }
+    .social-btn {
+      flex: 1; padding: 11px; border-radius: 10px;
+      border: 1.5px solid #e5e7eb; background: #fff;
+      font-size: 13px; font-weight: 500; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      gap: 8px; color: #374151; text-decoration: none;
+      transition: background 0.2s;
+    }
+    .social-btn:hover { background: #f9fafb; }
+
+    .portal-links {
+      display: flex; gap: 8px; justify-content: center;
+      margin-bottom: 16px;
+    }
+    .portal-btn {
+      font-size: 12px; padding: 7px 14px; border-radius: 8px;
+      text-decoration: none; font-weight: 500; transition: all 0.2s;
+    }
+    .portal-admin { color: #7c3aed; border: 1px solid rgba(124,58,237,0.3); }
+    .portal-admin:hover { background: rgba(124,58,237,0.05); }
+    .portal-lib { color: #0369a1; border: 1px solid rgba(3,105,161,0.3); }
+    .portal-lib:hover { background: rgba(3,105,161,0.05); }
+
+    .signup-row { text-align: center; font-size: 13px; color: #6b7280; }
+    .signup-row a { color: #2563eb; font-weight: 600; text-decoration: none; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Logo -->
+  <div class="logo">
+    <div class="logo-icon"><i class="fa-solid fa-book-open"></i></div>
+    <span class="logo-text">SmartLib</span>
+  </div>
+
+  <div class="card">
+    <h1 class="card-title">Welcome back</h1>
+    <p class="card-sub">Please enter your details to sign in.</p>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('auth.login') }}">
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" name="email" class="form-control"
+               placeholder="Enter your email" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div class="pw-wrap">
+          <input type="password" name="password" id="pw"
+                 class="form-control" placeholder="••••••••" required>
+          <button type="button" class="pw-toggle" onclick="togglePw()">
+            <i class="fa-regular fa-eye" id="eye-icon"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="remember-row">
+        <label>
+          <input type="checkbox" name="remember"> Remember me
+        </label>
+        <a href="#" class="forgot">Forgot password?</a>
+      </div>
+
+      <button type="submit" class="btn btn-member">
+        <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In
+      </button>
+    </form>
+
+    <!-- Divider -->
+    <div class="divider">Or continue with</div>
+
+    <!-- Social Buttons -->
+    <div class="social-btns">
+      <a href="{{ url_for('auth.google_login') }}" class="social-btn">
+        <img src="https://www.google.com/favicon.ico" width="16" height="16"> Google
+      </a>
+      <a href="{{ url_for('auth.github_login') }}" class="social-btn">
+        <i class="fa-brands fa-github"></i> GitHub
+      </a>
+    </div>
+
+    <!-- Portal Links -->
+    <div class="portal-links">
+      <a href="{{ url_for('auth.admin_login') }}" class="portal-btn portal-admin">
+        <i class="fa-solid fa-shield-halved"></i> Admin Portal
+      </a>
+      <a href="{{ url_for('auth.librarian_login') }}" class="portal-btn portal-lib">
+        <i class="fa-solid fa-book-open"></i> Librarian Portal
+      </a>
+    </div>
+
+    <div class="signup-row">
+      Don't have an account? <a href="{{ url_for('auth.register') }}">Sign up</a>
+    </div>
   </div>
 </div>
 
-<!-- Remember + Forgot -->
-<div class="remember-row">
-  <label>
-    <input type="checkbox" name="remember"> Remember me
-  </label>
-  <a href="#" class="forgot">Forgot password?</a>
-</div>
-
-<button type="submit" class="btn btn-primary">
-  Sign In
-</button>
-
-<!-- Portal Links -->
-<div style="display:flex;gap:8px;margin-top:12px;justify-content:center">
-  <a href="{{ url_for('auth.admin_login') }}"
-     style="font-size:12px;color:#7c3aed;text-decoration:none;
-            padding:6px 12px;border:1px solid #7c3aed;border-radius:8px">
-    <i class="fa-solid fa-shield-halved"></i> Admin
-  </a>
-
-  <a href="{{ url_for('auth.librarian_login') }}"
-     style="font-size:12px;color:#0369a1;text-decoration:none;
-            padding:6px 12px;border:1px solid #0369a1;border-radius:8px">
-    <i class="fa-solid fa-book-open"></i> Librarian
-  </a>
-</div>
-
-<!-- signup-row should remain below this -->
-<!--
-<div class="signup-row">
-  Don't have an account?
-  <a href="{{ url_for('auth.register') }}">Sign Up</a>
-</div>
--->
-
-{% endblock %}
+<script>
+  function togglePw() {
+    const pw = document.getElementById('pw');
+    const icon = document.getElementById('eye-icon');
+    if (pw.type === 'password') {
+      pw.type = 'text';
+      icon.className = 'fa-regular fa-eye-slash';
+    } else {
+      pw.type = 'password';
+      icon.className = 'fa-regular fa-eye';
+    }
+  }
+</script>
+</body>
+</html>

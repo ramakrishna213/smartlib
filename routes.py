@@ -529,6 +529,77 @@ def return_book(issue_id):
         flash(f'"{issue.book.title}" returned. No fine!', 'success')
     session.commit()
     return redirect(url_for('main.librarian_desk'))
+@main.route('/member/return/<int:issue_id>', methods=['POST'])
+@login_required
+def member_return_book(issue_id):
+    session = db().session
+    issue   = session.get(m().IssuedBook, issue_id)
+
+    if not issue or issue.user_id != current_user.id:
+        flash('Invalid request.', 'danger')
+        return redirect(url_for('main.dashboard'))
+
+    today = date.today()
+    issue.return_date = today
+    issue.status = 'returned'
+    issue.book.available_qty += 1
+
+    if today > issue.due_date:
+        days_late = (today - issue.due_date).days
+        amount    = m().Fine.calculate(days_late)
+        count     = session.execute(select(func.count(m().Fine.id))).scalar()
+        session.add(m().Fine(
+            transaction_id=f'FIN-{1000 + count + 1}',
+            issued_book_id=issue.id,
+            user_id=issue.user_id,
+            days_late=days_late,
+            amount=amount,
+            status='unpaid'
+        ))
+        session.add(m().Notification(
+            user_id=issue.user_id, type='overdue',
+            title='Book Returned Late',
+            message=f'"{issue.book.title}" returned {days_late} days late. Fine: ${amount}'
+        ))
+        flash(f'Book returned. Fine of ${amount} applied ({days_late} days late).', 'warning')
+    else:
+        flash(f'"{issue.book.title}" returned successfully. No fine!', 'success')
+
+    db().session.commit()
+    return redirect(url_for('main.my_books'))
+
+
+@main.route('/my-books')
+@login_required
+def my_books():
+    session = db().session
+
+    active_loans = session.execute(
+        select(m().IssuedBook).where(
+            m().IssuedBook.user_id == current_user.id,
+            m().IssuedBook.status == 'active'
+        ).order_by(m().IssuedBook.issue_date.desc())
+    ).scalars().all()
+
+    returned_books = session.execute(
+        select(m().IssuedBook).where(
+            m().IssuedBook.user_id == current_user.id,
+            m().IssuedBook.status == 'returned'
+        ).order_by(m().IssuedBook.issue_date.desc())
+    ).scalars().all()
+
+    unpaid_fines = session.execute(
+        select(m().Fine).where(
+            m().Fine.user_id == current_user.id,
+            m().Fine.status == 'unpaid'
+        )
+    ).scalars().all()
+
+    return render_template('my_books.html',
+                           active_loans=active_loans,
+                           returned_books=returned_books,
+                           unpaid_fines=unpaid_fines,
+                           today=date.today())
 
 
 # ─── Members ───────────────────────────────────────

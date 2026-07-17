@@ -404,11 +404,20 @@
     <i class="fa-solid fa-book"></i>
     <span>Books</span>
   </a>
-  <a href="{{ url_for('main.books') }}"
-     class="nav-item">
-    <i class="fa-solid fa-magnifying-glass"></i>
-    <span>Search</span>
-  </a>
+  <a href="{% if current_user.role == 'member' %}{{ url_for('main.my_books') }}{% else %}{{ url_for('main.books') }}{% endif %}"
+   class="nav-item {% if request.endpoint == 'main.my_books' %}active{% endif %}">
+
+    <i class="fa-solid fa-{% if current_user.role == 'member' %}book-bookmark{% else %}magnifying-glass{% endif %}"></i>
+
+    <span>
+        {% if current_user.role == 'member' %}
+            My Books
+        {% else %}
+            Search
+        {% endif %}
+    </span>
+
+</a>
   <a href="{{ url_for('main.members') }}"
      class="nav-item {% if request.endpoint == 'main.members' %}active{% endif %}">
     <i class="fa-solid fa-users"></i>
@@ -423,10 +432,6 @@
 {% endif %}
 
 <script>
-  // Apply dark mode on every page load
-if (localStorage.getItem('darkMode') === 'true') {
-  document.body.classList.add('dark');
-}
   function openSidebar() {
     document.getElementById('sidebar').style.left = '0';
     document.getElementById('overlay').style.display = 'block';
@@ -438,6 +443,10 @@ if (localStorage.getItem('darkMode') === 'true') {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/static/sw.js');
   }
+    // Apply dark mode on every page load
+  if (localStorage.getItem('darkMode') === 'true') {
+  document.body.classList.add('dark');
+}
 </script>
 
 </body>

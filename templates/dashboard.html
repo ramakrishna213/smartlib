@@ -79,6 +79,16 @@
         </a>
       </div>
     {% endif %}
+    <div style="margin-top:12px">
+    <a href="{{ url_for('main.my_books') }}"
+       class="btn btn-outline btn-sm"
+       style="width:100%;justify-content:center">
+
+        <i class="fa-solid fa-book-open"></i>
+        View All My Books & Return
+
+    </a>
+</div>
 
     <!-- Unpaid Fines Summary -->
     {% if unpaid_fines %}

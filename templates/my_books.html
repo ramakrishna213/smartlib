@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page">
+
+  <h1 class="page-title">My Books</h1>
+  <p class="page-subtitle">Track your borrowed books and return status.</p>
+
+  <!-- Stats -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:16px">
+    <div class="card" style="text-align:center;padding:12px">
+      <div style="font-size:22px;font-weight:700;color:#2563eb">
+        {{ active_loans|length }}
+      </div>
+      <div style="font-size:10px;color:#6b7280;margin-top:2px">Active</div>
+    </div>
+    <div class="card" style="text-align:center;padding:12px">
+      <div style="font-size:22px;font-weight:700;color:#16a34a">
+        {{ returned_books|length }}
+      </div>
+      <div style="font-size:10px;color:#6b7280;margin-top:2px">Returned</div>
+    </div>
+    <div class="card" style="text-align:center;padding:12px">
+      <div style="font-size:22px;font-weight:700;color:#ef4444">
+        {{ unpaid_fines|length }}
+      </div>
+      <div style="font-size:10px;color:#6b7280;margin-top:2px">Fines</div>
+    </div>
+  </div>
+
+  <!-- Active Loans -->
+  <div style="margin-top:16px">
+    <div style="font-size:15px;font-weight:600;color:#111827;
+                margin-bottom:10px;display:flex;align-items:center;gap:8px">
+      <i class="fa-solid fa-book-open" style="color:#2563eb"></i>
+      Currently Borrowed
+    </div>
+
+    {% if active_loans %}
+      {% for loan in active_loans %}
+      <div class="card" style="margin-bottom:10px">
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div class="book-cover-placeholder" style="flex-shrink:0">
+            <i class="fa-solid fa-book"></i>
+          </div>
+          <div style="flex:1">
+            <div class="book-title">{{ loan.book.title }}</div>
+            <div class="book-author">{{ loan.book.author }}</div>
+
+            <!-- Status Timeline -->
+            <div style="margin-top:10px">
+              <div style="display:flex;align-items:center;gap:0;margin-bottom:8px">
+
+                <!-- Step 1: Borrowed -->
+                <div style="display:flex;flex-direction:column;align-items:center;flex:1">
+                  <div style="width:28px;height:28px;border-radius:50%;
+                              background:#2563eb;display:flex;align-items:center;
+                              justify-content:center;color:#fff;font-size:12px">
+                    <i class="fa-solid fa-check"></i>
+                  </div>
+                  <div style="font-size:9px;color:#2563eb;font-weight:600;
+                              margin-top:3px;text-align:center">Borrowed</div>
+                  <div style="font-size:9px;color:#6b7280;text-align:center">
+                    {{ loan.issue_date.strftime('%d %b') }}
+                  </div>
+                </div>
+
+                <!-- Line -->
+                <div style="flex:1;height:2px;background:#2563eb;margin-bottom:20px"></div>
+
+                <!-- Step 2: Due Date -->
+                <div style="display:flex;flex-direction:column;align-items:center;flex:1">
+                  <div style="width:28px;height:28px;border-radius:50%;
+                              background:{% if loan.is_overdue %}#ef4444{% else %}#f59e0b{% endif %};
+                              display:flex;align-items:center;
+                              justify-content:center;color:#fff;font-size:12px">
+                    <i class="fa-solid fa-clock"></i>
+                  </div>
+                  <div style="font-size:9px;
+                              color:{% if loan.is_overdue %}#ef4444{% else %}#f59e0b{% endif %};
+                              font-weight:600;margin-top:3px;text-align:center">
+                    Due Date
+                  </div>
+                  <div style="font-size:9px;color:#6b7280;text-align:center">
+                    {{ loan.due_date.strftime('%d %b') }}
+                  </div>
+                </div>
+
+                <!-- Line -->
+                <div style="flex:1;height:2px;
+                            background:{% if loan.status == 'returned' %}#16a34a{% else %}#e5e7eb{% endif %};
+                            margin-bottom:20px"></div>
+
+                <!-- Step 3: Returned -->
+                <div style="display:flex;flex-direction:column;align-items:center;flex:1">
+                  <div style="width:28px;height:28px;border-radius:50%;
+                              background:#e5e7eb;display:flex;align-items:center;
+                              justify-content:center;color:#9ca3af;font-size:12px">
+                    <i class="fa-solid fa-box-archive"></i>
+                  </div>
+                  <div style="font-size:9px;color:#9ca3af;font-weight:600;
+                              margin-top:3px;text-align:center">Return</div>
+                  <div style="font-size:9px;color:#9ca3af;text-align:center">Pending</div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Days info -->
+            {% if loan.is_overdue %}
+            <div style="background:#fee2e2;border-radius:8px;padding:8px;
+                        font-size:12px;color:#991b1b;margin-top:4px">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              Overdue by {{ (today - loan.due_date).days }} days!
+              Fine: ${{ "%.2f"|format((today - loan.due_date).days * 0.50) }}
+            </div>
+            {% else %}
+            <div style="background:#dbeafe;border-radius:8px;padding:8px;
+                        font-size:12px;color:#1d4ed8;margin-top:4px">
+              <i class="fa-regular fa-clock"></i>
+              {{ loan.days_left }} days left to return
+            </div>
+            {% endif %}
+
+            <!-- Return Button -->
+            <form method="POST"
+                  action="{{ url_for('main.member_return_book', issue_id=loan.id) }}"
+                  style="margin-top:10px"
+                  onsubmit="return confirm('Are you sure you want to return this book?')">
+              <button type="submit" class="btn btn-primary btn-sm"
+                      style="width:100%;justify-content:center">
+                <i class="fa-solid fa-rotate-left"></i> Return This Book
+              </button>
+            </form>
+
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="card" style="text-align:center;padding:24px">
+        <i class="fa-regular fa-book-open" style="font-size:32px;color:#d1d5db"></i>
+        <p style="color:#9ca3af;margin-top:10px;font-size:14px">
+          No books currently borrowed
+        </p>
+        <a href="{{ url_for('main.books') }}" class="btn btn-primary btn-sm"
+           style="margin-top:12px;display:inline-flex">
+          Browse Books
+        </a>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Returned Books -->
+  {% if returned_books %}
+  <div style="margin-top:20px">
+    <div style="font-size:15px;font-weight:600;color:#111827;
+                margin-bottom:10px;display:flex;align-items:center;gap:8px">
+      <i class="fa-solid fa-circle-check" style="color:#16a34a"></i>
+      Return History
+    </div>
+
+    {% for loan in returned_books %}
+    <div class="card" style="margin-bottom:10px">
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <div class="book-cover-placeholder" style="flex-shrink:0;
+             background:linear-gradient(135deg,#16a34a,#15803d)">
+          <i class="fa-solid fa-book"></i>
+        </div>
+        <div style="flex:1">
+          <div class="book-title">{{ loan.book.title }}</div>
+          <div class="book-author">{{ loan.book.author }}</div>
+
+          <!-- Completed Timeline -->
+          <div style="display:flex;align-items:center;gap:0;margin-top:10px;margin-bottom:8px">
+
+            <div style="display:flex;flex-direction:column;align-items:center;flex:1">
+              <div style="width:24px;height:24px;border-radius:50%;
+                          background:#2563eb;display:flex;align-items:center;
+                          justify-content:center;color:#fff;font-size:10px">
+                <i class="fa-solid fa-check"></i>
+              </div>
+              <div style="font-size:9px;color:#2563eb;font-weight:600;margin-top:2px">
+                Borrowed
+              </div>
+              <div style="font-size:9px;color:#6b7280">
+                {{ loan.issue_date.strftime('%d %b') }}
+              </div>
+            </div>
+
+            <div style="flex:1;height:2px;background:#16a34a;margin-bottom:20px"></div>
+
+            <div style="display:flex;flex-direction:column;align-items:center;flex:1">
+              <div style="width:24px;height:24px;border-radius:50%;
+                          background:#16a34a;display:flex;align-items:center;
+                          justify-content:center;color:#fff;font-size:10px">
+                <i class="fa-solid fa-check"></i>
+              </div>
+              <div style="font-size:9px;color:#16a34a;font-weight:600;margin-top:2px">
+                Returned
+              </div>
+              <div style="font-size:9px;color:#6b7280">
+                {{ loan.return_date.strftime('%d %b') if loan.return_date }}
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Fine info -->
+          {% if loan.fine %}
+          <div style="background:{% if loan.fine.status == 'paid' %}#dcfce7{% else %}#fee2e2{% endif %};
+                      border-radius:8px;padding:8px;font-size:12px;
+                      color:{% if loan.fine.status == 'paid' %}#166534{% else %}#991b1b{% endif %}">
+            <i class="fa-solid fa-dollar-sign"></i>
+            Fine: ${{ "%.2f"|format(loan.fine.amount) }} —
+            {% if loan.fine.status == 'paid' %}
+              <strong>Paid ✓</strong>
+            {% else %}
+              <strong>Unpaid</strong>
+              <a href="{{ url_for('main.fines') }}"
+                 style="color:#ef4444;margin-left:4px">Pay Now</a>
+            {% endif %}
+          </div>
+          {% else %}
+          <div style="background:#dcfce7;border-radius:8px;padding:8px;
+                      font-size:12px;color:#166534">
+            <i class="fa-solid fa-circle-check"></i> No fine — returned on time!
+          </div>
+          {% endif %}
+
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Unpaid Fines -->
+  {% if unpaid_fines %}
+  <div style="margin-top:20px">
+    <div class="fines-banner">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="fines-banner-label">Total Pending Fines</div>
+          <div class="fines-banner-amount">
+            ${{ "%.2f"|format(unpaid_fines|sum(attribute='amount')) }}
+          </div>
+        </div>
+        <i class="fa-solid fa-triangle-exclamation" style="font-size:28px;opacity:0.7"></i>
+      </div>
+      <a href="{{ url_for('main.fines') }}" class="btn btn-sm"
+         style="margin-top:12px;background:rgba(255,255,255,0.25);
+                color:#fff;display:inline-flex">
+        Pay All Fines
+      </a>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -40,30 +40,29 @@
   <!-- Books List -->
   {% if books %}
     {% for book in books %}
-    <a href="{{ url_for('main.book_detail', book_id=book.id) }}"
-       style="text-decoration:none;">
-      <div class="book-card">
-        <div class="book-cover-placeholder">
-          <i class="fa-solid fa-book"></i>
+    <div class="book-card"
+         onclick="window.location='{{ url_for('main.book_detail', book_id=book.id) }}'"
+         style="cursor:pointer;">
+      <div class="book-cover-placeholder">
+        <i class="fa-solid fa-book"></i>
+      </div>
+      <div class="book-info">
+        <div class="book-title">{{ book.title }}</div>
+        <div class="book-author">{{ book.author }}</div>
+        <div class="book-meta">
+          <i class="fa-regular fa-book-open"></i>
+          {{ book.category.name }} • {{ book.publication_year }}
         </div>
-        <div class="book-info">
-          <div class="book-title">{{ book.title }}</div>
-          <div class="book-author">{{ book.author }}</div>
-          <div class="book-meta">
-            <i class="fa-regular fa-book-open"></i>
-            {{ book.category.name }} • {{ book.publication_year }}
-          </div>
-          <div class="book-footer">
-            <span style="color:#f59e0b;font-size:12px">★ {{ book.rating }}</span>
-            {% if book.is_available %}
-              <span class="badge badge-green">Available</span>
-            {% else %}
-              <span class="badge badge-red">Unavailable</span>
-            {% endif %}
-          </div>
+        <div class="book-footer">
+          <span style="color:#f59e0b;font-size:12px">★ {{ book.rating }}</span>
+          {% if book.is_available %}
+            <span class="badge badge-green">Available</span>
+          {% else %}
+            <span class="badge badge-red">Unavailable</span>
+          {% endif %}
         </div>
       </div>
-    </a>
+    </div>
     {% endfor %}
   {% else %}
     <div class="card" style="text-align:center;padding:28px">

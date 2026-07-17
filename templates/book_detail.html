@@ -1,9 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="page">
+
+  <!-- Back -->
   <div style="margin-bottom:16px">
-    <a href="{{ url_for('main.books') }}" style="color:#2563eb;font-size:13px;text-decoration:none">
-      ← Back to Catalog
+    <a href="{{ url_for('main.books') }}"
+       style="color:#2563eb;font-size:13px;text-decoration:none;
+              display:inline-flex;align-items:center;gap:6px;">
+      <i class="fa-solid fa-arrow-left"></i> Back to Catalog
     </a>
   </div>
 
@@ -28,9 +32,109 @@
     {% endif %}
   </div>
 
+  <!-- Read & Download Buttons -->
+  <div style="display:flex;gap:10px;margin-top:16px">
+    <a id="read-btn"
+       href="https://www.google.com/search?q={{ book.title|urlencode }}+{{ book.author|urlencode }}+read+online+free"
+       target="_blank"
+       style="flex:1;padding:12px;background:#2563eb;color:#fff;
+              border-radius:10px;text-decoration:none;font-size:13px;
+              font-weight:600;display:flex;align-items:center;
+              justify-content:center;gap:8px">
+      <i class="fa-solid fa-book-open"></i> Read Online
+    </a>
+    <a id="download-btn"
+       href="https://www.google.com/search?q={{ book.title|urlencode }}+{{ book.author|urlencode }}+free+PDF+download"
+       target="_blank"
+       style="flex:1;padding:12px;background:#16a34a;color:#fff;
+              border-radius:10px;text-decoration:none;font-size:13px;
+              font-weight:600;display:flex;align-items:center;
+              justify-content:center;gap:8px">
+      <i class="fa-solid fa-download"></i> Download PDF
+    </a>
+  </div>
+
+  <!-- Free Sources -->
+  <div class="card" style="margin-top:12px">
+    <div class="card-title" style="margin-bottom:10px">
+      <i class="fa-solid fa-link" style="color:#2563eb"></i> Free Reading Sources
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+
+      <a href="https://books.google.com/books?q={{ book.title|urlencode }}+{{ book.author|urlencode }}"
+         target="_blank"
+         style="display:flex;align-items:center;gap:12px;padding:12px;
+                background:#f0f9ff;border-radius:10px;text-decoration:none;
+                border:1px solid #bae6fd;">
+        <div style="width:36px;height:36px;background:#4285f4;border-radius:8px;
+                    display:flex;align-items:center;justify-content:center;
+                    color:#fff;font-size:16px;flex-shrink:0">
+          <i class="fa-brands fa-google"></i>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:#0c4a6e">Google Books</div>
+          <div style="font-size:11px;color:#64748b">Preview available chapters</div>
+        </div>
+        <i class="fa-solid fa-arrow-right" style="margin-left:auto;color:#0369a1"></i>
+      </a>
+
+      <a href="https://openlibrary.org/search?q={{ book.title|urlencode }}+{{ book.author|urlencode }}"
+         target="_blank"
+         style="display:flex;align-items:center;gap:12px;padding:12px;
+                background:#f0fdf4;border-radius:10px;text-decoration:none;
+                border:1px solid #bbf7d0;">
+        <div style="width:36px;height:36px;background:#16a34a;border-radius:8px;
+                    display:flex;align-items:center;justify-content:center;
+                    color:#fff;font-size:16px;flex-shrink:0">
+          <i class="fa-solid fa-book"></i>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:#14532d">Open Library</div>
+          <div style="font-size:11px;color:#64748b">Free borrow & download</div>
+        </div>
+        <i class="fa-solid fa-arrow-right" style="margin-left:auto;color:#16a34a"></i>
+      </a>
+
+      <a href="https://archive.org/search?query={{ book.title|urlencode }}+{{ book.author|urlencode }}"
+         target="_blank"
+         style="display:flex;align-items:center;gap:12px;padding:12px;
+                background:#fefce8;border-radius:10px;text-decoration:none;
+                border:1px solid #fde68a;">
+        <div style="width:36px;height:36px;background:#d97706;border-radius:8px;
+                    display:flex;align-items:center;justify-content:center;
+                    color:#fff;font-size:16px;flex-shrink:0">
+          <i class="fa-solid fa-archive"></i>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:#78350f">Internet Archive</div>
+          <div style="font-size:11px;color:#64748b">Free digital library</div>
+        </div>
+        <i class="fa-solid fa-arrow-right" style="margin-left:auto;color:#d97706"></i>
+      </a>
+
+      <a href="https://www.pdfdrive.com/search?q={{ book.title|urlencode }}"
+         target="_blank"
+         style="display:flex;align-items:center;gap:12px;padding:12px;
+                background:#fdf4ff;border-radius:10px;text-decoration:none;
+                border:1px solid #e9d5ff;">
+        <div style="width:36px;height:36px;background:#7c3aed;border-radius:8px;
+                    display:flex;align-items:center;justify-content:center;
+                    color:#fff;font-size:16px;flex-shrink:0">
+          <i class="fa-solid fa-file-pdf"></i>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:#4c1d95">PDF Drive</div>
+          <div style="font-size:11px;color:#64748b">Search & download PDF</div>
+        </div>
+        <i class="fa-solid fa-arrow-right" style="margin-left:auto;color:#7c3aed"></i>
+      </a>
+
+    </div>
+  </div>
+
   <!-- Description -->
   {% if book.description %}
-  <div class="card" style="margin-top:16px">
+  <div class="card" style="margin-top:12px">
     <div class="card-title">Description</div>
     <p style="font-size:13px;color:#374151;line-height:1.6;margin-top:8px">
       {{ book.description }}

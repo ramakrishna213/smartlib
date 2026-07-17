@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page">
+
+  <!-- Back -->
+  <div style="margin-bottom:16px">
+    <a href="{{ url_for('main.members') }}"
+       style="color:#2563eb;font-size:13px;text-decoration:none;
+              display:inline-flex;align-items:center;gap:6px;">
+      <i class="fa-solid fa-arrow-left"></i> Back to Members
+    </a>
+  </div>
+
+  <!-- Member Profile -->
+  <div class="card" style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+    <div style="width:52px;height:52px;border-radius:50%;background:#2563eb;
+                display:flex;align-items:center;justify-content:center;
+                color:#fff;font-size:20px;font-weight:700;flex-shrink:0">
+      {{ member.name[0].upper() }}
+    </div>
+    <div style="flex:1">
+      <div style="font-size:16px;font-weight:700;color:#111827">{{ member.name }}</div>
+      <div style="font-size:12px;color:#6b7280">{{ member.email }}</div>
+      <div style="font-size:12px;color:#6b7280">{{ member.student_id }} • {{ member.department }}</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:22px;font-weight:700;color:#2563eb">{{ history|length }}</div>
+      <div style="font-size:11px;color:#6b7280">Total Borrows</div>
+    </div>
+  </div>
+
+  <!-- Stats Row -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">
+    <div class="card" style="text-align:center;padding:12px">
+      <div style="font-size:20px;font-weight:700;color:#2563eb">
+        {{ history|selectattr('status','eq','active')|list|length }}
+      </div>
+      <div style="font-size:10px;color:#6b7280;margin-top:2px">Active</div>
+    </div>
+    <div class="card" style="text-align:center;padding:12px">
+      <div style="font-size:20px;font-weight:700;color:#16a34a">
+        {{ history|selectattr('status','eq','returned')|list|length }}
+      </div>
+      <div style="font-size:10px;color:#6b7280;margin-top:2px">Returned</div>
+    </div>
+    <div class="card" style="text-align:center;padding:12px">
+      <div style="font-size:20px;font-weight:700;color:#ef4444">
+        {{ fines|selectattr('status','eq','unpaid')|list|length }}
+      </div>
+      <div style="font-size:10px;color:#6b7280;margin-top:2px">Unpaid Fines</div>
+    </div>
+  </div>
+
+  <!-- Borrow History -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title" style="margin-bottom:12px">
+      <i class="fa-regular fa-clock" style="color:#2563eb"></i>
+      Borrow History ({{ history|length }})
+    </div>
+
+    {% if history %}
+    {% for h in history %}
+    <div style="padding:12px 0;border-bottom:1px solid #f3f4f6">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:600;color:#111827">
+            {{ h.book.title }}
+          </div>
+          <div style="font-size:12px;color:#6b7280;margin-top:2px">
+            {{ h.book.author }}
+          </div>
+        </div>
+        <div>
+          {% if h.status == 'active' %}
+            {% if h.is_overdue %}
+              <span class="badge badge-red">Overdue</span>
+            {% else %}
+              <span class="badge badge-amber">Active</span>
+            {% endif %}
+          {% elif h.status == 'returned' %}
+            <span class="badge badge-green">Returned</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Dates -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;
+                  gap:8px;margin-top:10px">
+        <div style="background:#f8fafc;border-radius:8px;padding:8px;text-align:center">
+          <div style="font-size:10px;color:#6b7280;margin-bottom:2px">
+            <i class="fa-solid fa-calendar-plus" style="color:#2563eb"></i> Issued
+          </div>
+          <div style="font-size:12px;font-weight:600;color:#111827">
+            {{ h.issue_date.strftime('%d %b %Y') }}
+          </div>
+        </div>
+        <div style="background:#f8fafc;border-radius:8px;padding:8px;text-align:center">
+          <div style="font-size:10px;color:#6b7280;margin-bottom:2px">
+            <i class="fa-solid fa-calendar-xmark" style="color:#f59e0b"></i> Due
+          </div>
+          <div style="font-size:12px;font-weight:600;
+                      color:{% if h.is_overdue %}#ef4444{% else %}#111827{% endif %}">
+            {{ h.due_date.strftime('%d %b %Y') }}
+          </div>
+        </div>
+        <div style="background:#f8fafc;border-radius:8px;padding:8px;text-align:center">
+          <div style="font-size:10px;color:#6b7280;margin-bottom:2px">
+            <i class="fa-solid fa-calendar-check" style="color:#16a34a"></i> Returned
+          </div>
+          <div style="font-size:12px;font-weight:600;color:#111827">
+            {% if h.return_date %}
+              {{ h.return_date.strftime('%d %b %Y') }}
+            {% else %}
+              <span style="color:#9ca3af">—</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Fine info if any -->
+      {% if h.fine %}
+      <div style="margin-top:8px;background:#fff7ed;border:1px solid #fed7aa;
+                  border-radius:8px;padding:8px;display:flex;
+                  align-items:center;justify-content:space-between">
+        <div style="font-size:12px;color:#c2410c">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          Fine: ${{ "%.2f"|format(h.fine.amount) }} ({{ h.fine.days_late }} days late)
+        </div>
+        {% if h.fine.status == 'paid' %}
+          <span class="badge badge-green">Paid</span>
+        {% else %}
+          <span class="badge badge-red">Unpaid</span>
+        {% endif %}
+      </div>
+      {% endif %}
+
+    </div>
+    {% endfor %}
+    {% else %}
+    <div style="text-align:center;padding:24px">
+      <i class="fa-regular fa-book-open" style="font-size:32px;color:#d1d5db"></i>
+      <p style="color:#9ca3af;font-size:13px;margin-top:8px">No borrow history yet</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Fine History -->
+  <div class="card">
+    <div class="card-title" style="margin-bottom:12px">
+      <i class="fa-solid fa-dollar-sign" style="color:#ef4444"></i>
+      Fine History ({{ fines|length }})
+    </div>
+
+    {% if fines %}
+    {% for fine in fines %}
+    <div class="fine-row">
+      <div>
+        <div class="fine-id">{{ fine.transaction_id }}</div>
+        <div class="fine-name">{{ fine.issued_book.book.title }}</div>
+        <div class="fine-book">
+          {{ fine.days_late }} days late •
+          {{ fine.created_at.strftime('%d %b %Y') }}
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div class="fine-amount">${{ "%.2f"|format(fine.amount) }}</div>
+        {% if fine.status == 'paid' %}
+          <span class="badge badge-green">Paid</span>
+          <div style="font-size:10px;color:#9ca3af;margin-top:2px">
+            {{ fine.paid_at.strftime('%d %b %Y') if fine.paid_at }}
+          </div>
+        {% else %}
+          <span class="badge badge-red">Unpaid</span>
+          <form method="POST"
+                action="{{ url_for('main.pay_fine', fine_id=fine.id) }}"
+                style="margin-top:4px">
+            <button class="btn btn-primary btn-sm">Pay</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div style="text-align:center;padding:24px">
+      <i class="fa-regular fa-circle-check" style="font-size:32px;color:#d1d5db"></i>
+      <p style="color:#9ca3af;font-size:13px;margin-top:8px">No fines on record</p>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

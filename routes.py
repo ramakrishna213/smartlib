@@ -550,6 +550,32 @@ def members():
     ).scalars().all()
     return render_template('members.html', members=all_members,
                            departments=[d for d in depts if d])
+@main.route('/members/<int:member_id>/history')
+@login_required
+@admin_required
+def member_history(member_id):
+    session = db().session
+    member  = session.get(m().User, member_id)
+    if not member:
+        flash('Member not found.', 'danger')
+        return redirect(url_for('main.members'))
+
+    history = session.execute(
+        select(m().IssuedBook).where(
+            m().IssuedBook.user_id == member_id
+        ).order_by(m().IssuedBook.issue_date.desc())
+    ).scalars().all()
+
+    fines = session.execute(
+        select(m().Fine).where(
+            m().Fine.user_id == member_id
+        ).order_by(m().Fine.created_at.desc())
+    ).scalars().all()
+
+    return render_template('member_history.html',
+                           member=member,
+                           history=history,
+                           fines=fines)
 
 
 # ─── Add Member ────────────────────────────────────

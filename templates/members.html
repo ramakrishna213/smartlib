@@ -6,10 +6,8 @@
       <h1 class="page-title">Members</h1>
       <p class="page-subtitle">Manage library members and their accounts.</p>
     </div>
-
-    <!-- Updated Button -->
-    <a href="{{ url_for('main.add_member') }}" class="btn btn-primary btn-sm">
-      <i class="fa-solid fa-user-plus"></i> Add Member
+    <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm">
+      <i class="fa-solid fa-plus"></i> Add
     </a>
   </div>
 
@@ -17,13 +15,15 @@
     <!-- Search -->
     <form method="GET" class="search-bar">
       <input type="text" name="search" class="form-control"
-             placeholder="Search members..." value="{{ request.args.get('search','') }}">
+             placeholder="Search members..."
+             value="{{ request.args.get('search','') }}">
       <button type="submit">Search</button>
     </form>
 
     <!-- Department Tabs -->
     <div class="tabs">
-      <a href="{{ url_for('main.members') }}" class="tab {% if not request.args.get('department') %}active{% endif %}">All</a>
+      <a href="{{ url_for('main.members') }}"
+         class="tab {% if not request.args.get('department') %}active{% endif %}">All</a>
       {% for dept in departments %}
       <a href="{{ url_for('main.members', department=dept) }}"
          class="tab {% if request.args.get('department') == dept %}active{% endif %}">
@@ -36,19 +36,31 @@
     <div class="card">
       {% if members %}
         {% for member in members %}
-        <div class="member-card">
-          <div class="member-avatar" style="background:{{ ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6']|random }}22;color:{{ ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6']|random }}">
+        <div style="display:flex;align-items:center;gap:12px;
+                    padding:12px 0;border-bottom:1px solid #f3f4f6">
+          <div class="member-avatar"
+               style="background:#dbeafe;color:#1d4ed8">
             {{ member.name[:2].upper() }}
           </div>
           <div style="flex:1">
             <div class="member-name">{{ member.name }}</div>
             <div class="member-meta">{{ member.student_id }} • {{ member.email }}</div>
+            <div class="member-meta">{{ member.department }}</div>
           </div>
-          <div style="font-size:11px;color:#6b7280">{{ member.department }}</div>
+          {% if current_user.role == 'admin' %}
+          <a href="{{ url_for('main.member_history', member_id=member.id) }}"
+             style="font-size:11px;padding:6px 10px;background:#dbeafe;
+                    color:#1d4ed8;border-radius:8px;text-decoration:none;
+                    font-weight:500;white-space:nowrap">
+            <i class="fa-solid fa-clock-rotate-left"></i> History
+          </a>
+          {% endif %}
         </div>
         {% endfor %}
       {% else %}
-        <p style="color:#9ca3af;font-size:13px;text-align:center;padding:20px">No members found.</p>
+        <p style="color:#9ca3af;font-size:13px;text-align:center;padding:20px">
+          No members found.
+        </p>
       {% endif %}
     </div>
   </div>

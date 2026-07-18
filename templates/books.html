@@ -26,9 +26,7 @@
   <!-- Category Tabs -->
   <div class="tabs">
     <a href="{{ url_for('main.books') }}"
-       class="tab {% if not request.args.get('category') %}active{% endif %}">
-      All
-    </a>
+       class="tab {% if not request.args.get('category') %}active{% endif %}">All</a>
     {% for cat in categories %}
     <a href="{{ url_for('main.books', category=cat.id) }}"
        class="tab {% if request.args.get('category')|int == cat.id %}active{% endif %}">
@@ -41,19 +39,14 @@
   {% if books %}
     {% for book in books %}
     <div class="card" style="margin-bottom:10px;padding:14px">
-      <div style="display:flex;gap:12px;align-items:flex-start">
 
-        <!-- Cover -->
-        <div class="book-cover-placeholder"
-             onclick="window.location='{{ url_for('main.book_detail', book_id=book.id) }}'"
-             style="cursor:pointer;flex-shrink:0">
+      <!-- Book Info - clickable -->
+      <div style="display:flex;gap:12px;align-items:flex-start;cursor:pointer"
+           onclick="window.location='{{ url_for('main.book_detail', book_id=book.id) }}'">
+        <div class="book-cover-placeholder" style="flex-shrink:0">
           <i class="fa-solid fa-book"></i>
         </div>
-
-        <!-- Info -->
-        <div style="flex:1"
-             onclick="window.location='{{ url_for('main.book_detail', book_id=book.id) }}'"
-             style="cursor:pointer">
+        <div style="flex:1">
           <div class="book-title">{{ book.title }}</div>
           <div class="book-author">{{ book.author }}</div>
           <div class="book-meta">
@@ -69,26 +62,24 @@
             {% endif %}
           </div>
         </div>
-
       </div>
 
       <!-- Member Actions -->
       {% if current_user.role == 'member' %}
       <div style="margin-top:10px;display:flex;gap:8px">
 
-        <!-- Check if member already borrowed this book -->
-        {% set active_loan = namespace(found=false, id=0) %}
+        {% set active_loan = namespace(found=false, loan_id=0) %}
         {% for loan in current_user.issued_books %}
           {% if loan.book_id == book.id and loan.status == 'active' %}
             {% set active_loan.found = true %}
-            {% set active_loan.id = loan.id %}
+            {% set active_loan.loan_id = loan.id %}
           {% endif %}
         {% endfor %}
 
         {% if active_loan.found %}
-          <!-- Return Button -->
+          <!-- Return Book -->
           <form method="POST"
-                action="{{ url_for('main.member_return_book', issue_id=active_loan.id) }}"
+                action="{{ url_for('main.member_return_book', issue_id=active_loan.loan_id) }}"
                 style="flex:1"
                 onsubmit="return confirm('Return this book?')">
             <button type="submit" class="btn btn-sm"
@@ -98,14 +89,17 @@
             </button>
           </form>
         {% elif book.is_available %}
-          <!-- Get Book Button -->
-          <a href="{{ url_for('main.book_detail', book_id=book.id) }}"
-             class="btn btn-primary btn-sm"
-             style="flex:1;justify-content:center">
-            <i class="fa-solid fa-hand"></i> Get Book
-          </a>
+          <!-- Get Book - POST request -->
+          <form method="POST"
+                action="{{ url_for('main.request_book', book_id=book.id) }}"
+                style="flex:1"
+                onsubmit="return confirm('Send request for this book?')">
+            <button type="submit" class="btn btn-primary btn-sm"
+                    style="width:100%;justify-content:center">
+              <i class="fa-solid fa-hand"></i> Get Book
+            </button>
+          </form>
         {% else %}
-          <!-- Unavailable -->
           <button class="btn btn-sm" disabled
                   style="flex:1;justify-content:center;
                          background:#f3f4f6;color:#9ca3af;cursor:not-allowed">

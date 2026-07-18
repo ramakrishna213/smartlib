@@ -600,6 +600,75 @@ def my_books():
                            returned_books=returned_books,
                            unpaid_fines=unpaid_fines,
                            today=date.today())
+@main.route('/books/<int:book_id>/request', methods=['POST'])
+@login_required
+def request_book(book_id):
+    session = db().session
+    book    = session.get(m().Book, book_id)
+
+    if not book:
+        flash('Book not found.', 'danger')
+        return redirect(url_for('main.books'))
+
+    if not book.is_available:
+        flash('Book is not available.', 'danger')
+        return redirect(url_for('main.book_detail', book_id=book_id))
+
+    # Check if already borrowed
+    existing = session.execute(
+        select(m().IssuedBook).where(
+            m().IssuedBook.user_id == current_user.id,
+            m().IssuedBook.book_id == book_id,
+            m().IssuedBook.status == 'active'
+        )
+    ).scalar_one_or_none()
+
+    if existing:
+        flash('You already have this book borrowed!', 'warning')
+        return redirect(url_for('main.book_detail', book_id=book_id))
+
+    # Check if already requested
+    existing_request = session.execute(
+        select(m().Notification).where(
+            m().Notification.user_id == current_user.id,
+            m().Notification.type == 'book_request',
+            m().Notification.message.contains(book.title)
+        )
+    ).scalar_one_or_none()
+
+    if existing_request:
+        flash('You already requested this book!', 'warning')
+        return redirect(url_for('main.book_detail', book_id=book_id))
+
+    # Send notification to all librarians and admins
+    staff = session.execute(
+        select(m().User).where(
+            m().User.role.in_(['admin', 'librarian'])
+        )
+    ).scalars().all()
+
+    for staff_member in staff:
+        session.add(m().Notification(
+            user_id=staff_member.id,
+            type='book_request',
+            title=f'Book Request from {current_user.name}',
+            message=f'{current_user.name} (ID: {current_user.student_id}) '
+                    f'has requested "{book.title}" by {book.author}. '
+                    f'Student Email: {current_user.email}'
+        ))
+
+    # Confirm notification to member
+    session.add(m().Notification(
+        user_id=current_user.id,
+        type='reservation',
+        title='Book Request Sent!',
+        message=f'Your request for "{book.title}" has been sent to the librarian. '
+                f'Please visit the library desk to collect it.'
+    ))
+
+    session.commit()
+    flash(f'Request sent for "{book.title}"! Visit the library desk to collect it.', 'success')
+    return redirect(url_for('main.book_detail', book_id=book_id))
 
 
 # ─── Members ───────────────────────────────────────

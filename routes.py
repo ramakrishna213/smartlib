@@ -424,12 +424,12 @@ def book_detail(book_id):
     if not book:
         flash('Book not found.', 'danger')
         return redirect(url_for('main.books'))
+
     history = session.execute(
         select(m().IssuedBook).where(m().IssuedBook.book_id == book_id)
         .order_by(m().IssuedBook.issue_date.desc()).limit(10)
     ).scalars().all()
 
-    # Check if current member has active loan for this book
     active_loan = None
     if current_user.role == 'member':
         active_loan = session.execute(

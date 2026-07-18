@@ -192,6 +192,60 @@
     {% endif %}
   </div>
 
+  <!-- Member Actions -->
+  {% if current_user.role == 'member' %}
+  <div style="margin-top:12px">
+
+    {% set active_loan = namespace(found=false, id=0) %}
+    {% for loan in current_user.issued_books %}
+      {% if loan.book_id == book.id and loan.status == 'active' %}
+        {% set active_loan.found = true %}
+        {% set active_loan.id = loan.id %}
+      {% endif %}
+    {% endfor %}
+
+    {% if active_loan.found %}
+      <!-- Return Book -->
+      <div class="card" style="background:#fff7ed;border-color:#fed7aa">
+        <div style="font-size:13px;color:#c2410c;margin-bottom:10px">
+          <i class="fa-solid fa-clock"></i>
+          You have borrowed this book. Please return it on time.
+        </div>
+        <form method="POST"
+              action="{{ url_for('main.member_return_book', issue_id=active_loan.id) }}"
+              onsubmit="return confirm('Are you sure you want to return this book?')">
+          <button type="submit" class="btn btn-sm"
+                  style="width:100%;justify-content:center;
+                         background:#ef4444;color:#fff">
+            <i class="fa-solid fa-rotate-left"></i> Return This Book
+          </button>
+        </form>
+      </div>
+    {% elif book.is_available %}
+      <!-- Get Book - show info to visit librarian -->
+      <div class="card" style="background:#f0fdf4;border-color:#bbf7d0">
+        <div style="font-size:13px;color:#166534;margin-bottom:10px">
+          <i class="fa-solid fa-circle-check"></i>
+          This book is available! Visit the librarian desk to borrow it.
+        </div>
+        <a href="{{ url_for('main.notifications') }}"
+           class="btn btn-primary btn-sm"
+           style="width:100%;justify-content:center">
+          <i class="fa-solid fa-bell"></i> Request This Book
+        </a>
+      </div>
+    {% else %}
+      <div class="card" style="background:#fef2f2;border-color:#fecaca">
+        <div style="font-size:13px;color:#991b1b">
+          <i class="fa-solid fa-xmark"></i>
+          This book is currently unavailable. Check back later.
+        </div>
+      </div>
+    {% endif %}
+
+  </div>
+  {% endif %}
+
   <!-- Issue Button (librarian/admin only) -->
   {% if current_user.role in ['admin', 'librarian'] and book.is_available %}
   <div style="margin-top:12px">
@@ -200,6 +254,3 @@
     </a>
   </div>
   {% endif %}
-
-</div>
-{% endblock %}

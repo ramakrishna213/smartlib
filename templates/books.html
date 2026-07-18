@@ -40,28 +40,101 @@
   <!-- Books List -->
   {% if books %}
     {% for book in books %}
-    <div class="book-card"
-         onclick="window.location='{{ url_for('main.book_detail', book_id=book.id) }}'"
-         style="cursor:pointer;">
-      <div class="book-cover-placeholder">
-        <i class="fa-solid fa-book"></i>
-      </div>
-      <div class="book-info">
-        <div class="book-title">{{ book.title }}</div>
-        <div class="book-author">{{ book.author }}</div>
-        <div class="book-meta">
-          <i class="fa-regular fa-book-open"></i>
-          {{ book.category.name }} • {{ book.publication_year }}
+    <div class="card" style="margin-bottom:10px;padding:14px">
+      <div style="display:flex;gap:12px;align-items:flex-start">
+
+        <!-- Cover -->
+        <div class="book-cover-placeholder"
+             onclick="window.location='{{ url_for('main.book_detail', book_id=book.id) }}'"
+             style="cursor:pointer;flex-shrink:0">
+          <i class="fa-solid fa-book"></i>
         </div>
-        <div class="book-footer">
-          <span style="color:#f59e0b;font-size:12px">★ {{ book.rating }}</span>
-          {% if book.is_available %}
-            <span class="badge badge-green">Available</span>
-          {% else %}
-            <span class="badge badge-red">Unavailable</span>
+
+        <!-- Info -->
+        <div style="flex:1"
+             onclick="window.location='{{ url_for('main.book_detail', book_id=book.id) }}'"
+             style="cursor:pointer">
+          <div class="book-title">{{ book.title }}</div>
+          <div class="book-author">{{ book.author }}</div>
+          <div class="book-meta">
+            <i class="fa-regular fa-book-open"></i>
+            {{ book.category.name }} • {{ book.publication_year }}
+          </div>
+          <div class="book-footer" style="margin-top:6px">
+            <span style="color:#f59e0b;font-size:12px">★ {{ book.rating }}</span>
+            {% if book.is_available %}
+              <span class="badge badge-green">Available</span>
+            {% else %}
+              <span class="badge badge-red">Unavailable</span>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Member Actions -->
+      {% if current_user.role == 'member' %}
+      <div style="margin-top:10px;display:flex;gap:8px">
+
+        <!-- Check if member already borrowed this book -->
+        {% set active_loan = namespace(found=false, id=0) %}
+        {% for loan in current_user.issued_books %}
+          {% if loan.book_id == book.id and loan.status == 'active' %}
+            {% set active_loan.found = true %}
+            {% set active_loan.id = loan.id %}
           {% endif %}
-        </div>
+        {% endfor %}
+
+        {% if active_loan.found %}
+          <!-- Return Button -->
+          <form method="POST"
+                action="{{ url_for('main.member_return_book', issue_id=active_loan.id) }}"
+                style="flex:1"
+                onsubmit="return confirm('Return this book?')">
+            <button type="submit" class="btn btn-sm"
+                    style="width:100%;justify-content:center;
+                           background:#ef4444;color:#fff">
+              <i class="fa-solid fa-rotate-left"></i> Return Book
+            </button>
+          </form>
+        {% elif book.is_available %}
+          <!-- Get Book Button -->
+          <a href="{{ url_for('main.book_detail', book_id=book.id) }}"
+             class="btn btn-primary btn-sm"
+             style="flex:1;justify-content:center">
+            <i class="fa-solid fa-hand"></i> Get Book
+          </a>
+        {% else %}
+          <!-- Unavailable -->
+          <button class="btn btn-sm" disabled
+                  style="flex:1;justify-content:center;
+                         background:#f3f4f6;color:#9ca3af;cursor:not-allowed">
+            <i class="fa-solid fa-xmark"></i> Unavailable
+          </button>
+        {% endif %}
+
+        <!-- Read Online -->
+        <a href="https://books.google.com/books?q={{ book.title|urlencode }}"
+           target="_blank"
+           class="btn btn-sm"
+           style="background:#dbeafe;color:#1d4ed8;flex:1;justify-content:center">
+          <i class="fa-solid fa-book-open"></i> Read
+        </a>
+
       </div>
+      {% endif %}
+
+      <!-- Admin/Librarian Actions -->
+      {% if current_user.role in ['admin', 'librarian'] %}
+      <div style="margin-top:10px">
+        <a href="{{ url_for('main.book_detail', book_id=book.id) }}"
+           class="btn btn-primary btn-sm"
+           style="width:100%;justify-content:center">
+          <i class="fa-solid fa-eye"></i> View Details & Issue
+        </a>
+      </div>
+      {% endif %}
+
     </div>
     {% endfor %}
   {% else %}

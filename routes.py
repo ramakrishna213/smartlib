@@ -428,31 +428,22 @@ def book_detail(book_id):
         select(m().IssuedBook).where(m().IssuedBook.book_id == book_id)
         .order_by(m().IssuedBook.issue_date.desc()).limit(10)
     ).scalars().all()
-    return render_template('book_detail.html', book=book, history=history)
 
+    # Check if current member has active loan for this book
+    active_loan = None
+    if current_user.role == 'member':
+        active_loan = session.execute(
+            select(m().IssuedBook).where(
+                m().IssuedBook.user_id == current_user.id,
+                m().IssuedBook.book_id == book_id,
+                m().IssuedBook.status == 'active'
+            )
+        ).scalar_one_or_none()
 
-@main.route('/books/add', methods=['GET', 'POST'])
-@login_required
-@admin_required
-def add_book():
-    session    = db().session
-    categories = session.execute(select(m().Category)).scalars().all()
-    if request.method == 'POST':
-        qty  = int(request.form.get('quantity', 1))
-        book = m().Book(
-            title=request.form.get('title'),
-            author=request.form.get('author'),
-            category_id=request.form.get('category_id'),
-            publication_year=request.form.get('publication_year'),
-            description=request.form.get('description'),
-            isbn=request.form.get('isbn') or None,
-            total_quantity=qty, available_qty=qty
-        )
-        session.add(book)
-        session.commit()
-        flash('Book added!', 'success')
-        return redirect(url_for('main.books'))
-    return render_template('add_book.html', categories=categories)
+    return render_template('book_detail.html',
+                           book=book,
+                           history=history,
+                           active_loan=active_loan)
 
 
 # ─── Issue Book ────────────────────────────────────

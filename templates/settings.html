@@ -34,33 +34,36 @@
 
   <div style="margin-top:16px">
 
-    <!-- Profile Section -->
-    <form method="POST" action="{{ url_for('main.settings') }}">
-      <div class="settings-section">
-        <div class="settings-title">Profile</div>
-        <div class="form-group">
-          <label class="form-label">Full Name</label>
-          <input type="text" name="name" class="form-control"
-                 value="{{ current_user.name }}">
+    <!-- Profile Card -->
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="width:52px;height:52px;border-radius:50%;
+                    background:#2563eb;color:#fff;font-size:20px;
+                    font-weight:700;display:flex;align-items:center;
+                    justify-content:center;flex-shrink:0">
+          {{ current_user.name[0].upper() }}
         </div>
-        <div class="form-group">
-          <label class="form-label">Email</label>
-          <input type="email" class="form-control"
-                 value="{{ current_user.email }}" disabled
-                 style="background:#f9fafb;color:#9ca3af">
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:600;color:#111827">
+            {{ current_user.name }}
+          </div>
+          <div style="font-size:12px;color:#6b7280">{{ current_user.email }}</div>
+          <div style="font-size:12px;color:#6b7280">
+            {{ current_user.role|capitalize }}
+            {% if current_user.department %}
+              • {{ current_user.department }}
+            {% endif %}
+          </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Role</label>
-          <input type="text" class="form-control"
-                 value="{{ current_user.role|capitalize }}" disabled
-                 style="background:#f9fafb;color:#9ca3af">
-        </div>
-        <button type="submit" class="btn btn-primary btn-sm"
-                style="width:100%;justify-content:center">
-          <i class="fa-solid fa-check"></i> Save Profile
-        </button>
       </div>
-    </form>
+
+      <!-- Edit Profile Button -->
+      <a href="{{ url_for('main.edit_profile') }}"
+         class="btn btn-outline btn-sm"
+         style="width:100%;justify-content:center;margin-top:14px">
+        <i class="fa-solid fa-pen"></i> Edit Profile & Email
+      </a>
+    </div>
 
     <!-- Appearance -->
     <div class="settings-section">
@@ -132,24 +135,17 @@
     <div class="settings-section">
       <div class="settings-title">Security & Privacy</div>
 
-      <!-- Change Password Link -->
-      <a href="{{ url_for('main.change_password') }}"
-         style="text-decoration:none">
+      <a href="{{ url_for('main.change_password') }}" style="text-decoration:none">
         <div class="settings-item">
-          <div class="settings-icon">
-            <i class="fa-solid fa-lock"></i>
-          </div>
+          <div class="settings-icon"><i class="fa-solid fa-lock"></i></div>
           <div style="flex:1">
             <div class="settings-label">Change Password</div>
             <div class="settings-sub">Update your login credentials</div>
           </div>
-          <span class="chevron">
-            <i class="fa-solid fa-chevron-right"></i>
-          </span>
+          <span class="chevron"><i class="fa-solid fa-chevron-right"></i></span>
         </div>
       </a>
 
-      <!-- Two Factor Auth -->
       <div class="settings-item">
         <div class="settings-icon"><i class="fa-solid fa-shield"></i></div>
         <div>
@@ -182,13 +178,11 @@
 </div>
 
 <script>
-  // Dark Mode
-  const darkToggle = document.getElementById('dark-mode-toggle');
   if (localStorage.getItem('darkMode') === 'true') {
     document.body.classList.add('dark');
-    darkToggle.checked = true;
+    document.getElementById('dark-mode-toggle').checked = true;
   }
-  darkToggle.addEventListener('change', function() {
+  document.getElementById('dark-mode-toggle').addEventListener('change', function() {
     if (this.checked) {
       document.body.classList.add('dark');
       localStorage.setItem('darkMode', 'true');
@@ -198,36 +192,29 @@
     }
   });
 
-  // Language
   const savedLang = localStorage.getItem('language') || 'en';
   document.getElementById('lang-select').value = savedLang;
   function changeLanguage(lang) {
     localStorage.setItem('language', lang);
     const messages = {
-      'en': 'Language set to English!',
-      'hi': 'भाषा हिंदी में सेट की गई!',
-      'ta': 'மொழி தமிழில் அமைக்கப்பட்டது!',
-      'te': 'భాష తెలుగులో సెట్ చేయబడింది!',
-      'fr': 'Langue définie en français!',
-      'de': 'Sprache auf Deutsch eingestellt!',
-      'es': '¡Idioma configurado en español!'
+      'en':'Language set to English!','hi':'भाषा हिंदी में सेट की गई!',
+      'ta':'மொழி தமிழில் அமைக்கப்பட்டது!','te':'భాష తెలుగులో సెట్ చేయబడింది!',
+      'fr':'Langue définie en français!','de':'Sprache auf Deutsch eingestellt!',
+      'es':'¡Idioma configurado en español!'
     };
     showToast(messages[lang] || 'Language updated!');
   }
 
-  // Save Settings
   function saveSetting(key, value) {
     localStorage.setItem(key, value);
     showToast(value ? '✅ Enabled!' : '❌ Disabled!');
   }
 
-  // Load saved settings
   if (localStorage.getItem('push_notifications') === 'false')
     document.getElementById('push-toggle').checked = false;
   if (localStorage.getItem('email_alerts') === 'false')
     document.getElementById('email-toggle').checked = false;
 
-  // Toast
   function showToast(msg) {
     const toast = document.createElement('div');
     toast.textContent = msg;
@@ -240,7 +227,6 @@
     setTimeout(() => toast.remove(), 2500);
   }
 
-  // Push Notification Permission
   document.getElementById('push-toggle').addEventListener('change', function() {
     if (this.checked && 'Notification' in window) {
       Notification.requestPermission().then(permission => {
@@ -256,7 +242,6 @@
   });
 </script>
 
-<!-- Dark Mode CSS -->
 <style>
   body.dark { background: #111827 !important; color: #f9fafb !important; }
   body.dark .header { background: #1f2937 !important; border-color: #374151 !important; }

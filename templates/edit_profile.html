@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page">
+
+  <!-- Back -->
+  <div style="margin-bottom:16px">
+    <a href="{{ url_for('main.settings') }}"
+       style="color:#2563eb;font-size:13px;text-decoration:none;
+              display:inline-flex;align-items:center;gap:6px">
+      <i class="fa-solid fa-arrow-left"></i> Back to Settings
+    </a>
+  </div>
+
+  <h1 class="page-title">Edit Profile</h1>
+  <p class="page-subtitle">Update your account information.</p>
+
+  <div style="margin-top:16px">
+
+    <!-- Avatar -->
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="width:72px;height:72px;border-radius:50%;
+                  background:#2563eb;color:#fff;font-size:28px;
+                  font-weight:700;display:flex;align-items:center;
+                  justify-content:center;margin:0 auto">
+        {{ current_user.name[0].upper() }}
+      </div>
+      <div style="margin-top:8px;font-size:14px;font-weight:600;
+                  color:#111827">{{ current_user.name }}</div>
+      <div style="font-size:12px;color:#6b7280">
+        {{ current_user.role|capitalize }}
+      </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('main.edit_profile') }}">
+      <div class="card">
+
+        <!-- Name -->
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fa-solid fa-user" style="color:#2563eb"></i>
+            Full Name
+          </label>
+          <input type="text" name="name" class="form-control"
+                 value="{{ current_user.name }}" required>
+        </div>
+
+        <!-- Email -->
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fa-solid fa-envelope" style="color:#2563eb"></i>
+            Email Address
+          </label>
+          <input type="email" name="email" class="form-control"
+                 value="{{ current_user.email }}" required>
+          <div style="font-size:11px;color:#6b7280;margin-top:4px">
+            This is your login email — changing it will require
+            you to use the new email to login next time.
+          </div>
+        </div>
+
+        {% if current_user.role == 'member' %}
+        <!-- Student ID -->
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fa-solid fa-id-card" style="color:#2563eb"></i>
+            Student ID
+          </label>
+          <input type="text" name="student_id" class="form-control"
+                 value="{{ current_user.student_id or '' }}"
+                 placeholder="e.g. STU-2024-001">
+        </div>
+
+        <!-- Department -->
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fa-solid fa-building" style="color:#2563eb"></i>
+            Department
+          </label>
+          <select name="department" class="form-control">
+            <option value="">Select Department</option>
+            {% for dept in ['Computer Science','Engineering','Business',
+                            'Arts','Science','Mathematics','Medicine'] %}
+            <option value="{{ dept }}"
+              {% if current_user.department == dept %}selected{% endif %}>
+              {{ dept }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endif %}
+
+        <!-- Warning for admin/librarian -->
+        {% if current_user.role in ['admin', 'librarian'] %}
+        <div style="background:#fef9c3;border:1px solid #fde68a;
+                    border-radius:10px;padding:12px;margin-bottom:16px;
+                    font-size:12px;color:#854d0e;display:flex;gap:8px">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <div>After changing your email, you must use the
+          <strong>new email</strong> to login next time.</div>
+        </div>
+        {% endif %}
+
+        <button type="submit" class="btn btn-primary">
+          <i class="fa-solid fa-check"></i> Save Changes
+        </button>
+
+      </div>
+    </form>
+
+    <!-- Quick Links -->
+    <div style="display:flex;gap:10px;margin-top:12px">
+      <a href="{{ url_for('main.change_password') }}"
+         class="btn btn-outline btn-sm"
+         style="flex:1;justify-content:center">
+        <i class="fa-solid fa-lock"></i> Change Password
+      </a>
+      <a href="{{ url_for('auth.logout') }}"
+         class="btn btn-sm"
+         style="flex:1;justify-content:center;
+                color:#ef4444;border:1.5px solid #ef4444;background:#fff">
+        <i class="fa-solid fa-right-from-bracket"></i> Logout
+      </a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

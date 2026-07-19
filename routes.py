@@ -847,6 +847,44 @@ def settings():
         session.commit()
         flash('Settings updated!', 'success')
     return render_template('settings.html')
+#-------edit profile----------------
+@main.route('/edit-profile', methods=['GET', 'POST'])
+@login_required
+def edit_profile():
+    session = db().session
+    if request.method == 'POST':
+        name       = request.form.get('name')
+        email      = request.form.get('email')
+        student_id = request.form.get('student_id')
+        department = request.form.get('department')
+
+        # Check if email already taken by another user
+        existing = session.execute(
+            select(m().User).where(
+                m().User.email == email,
+                m().User.id != current_user.id
+            )
+        ).scalar_one_or_none()
+
+        if existing:
+            flash('Email already taken by another user.', 'danger')
+            return redirect(url_for('main.edit_profile'))
+
+        current_user.name       = name
+        current_user.email      = email
+        current_user.student_id = student_id or current_user.student_id
+        current_user.department = department or current_user.department
+        session.commit()
+        flash('Profile updated successfully!', 'success')
+
+        if current_user.role == 'admin':
+            return redirect(url_for('main.admin_dashboard'))
+        elif current_user.role == 'librarian':
+            return redirect(url_for('main.librarian_desk'))
+        return redirect(url_for('main.dashboard'))
+
+    return render_template('edit_profile.html')
+#--------changepassword----------
 @main.route('/change-password', methods=['GET', 'POST'])
 @login_required
 def change_password():

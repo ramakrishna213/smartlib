@@ -847,3 +847,36 @@ def settings():
         session.commit()
         flash('Settings updated!', 'success')
     return render_template('settings.html')
+@main.route('/change-password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    session = db().session
+    if request.method == 'POST':
+        current_pw  = request.form.get('current_password')
+        new_pw      = request.form.get('new_password')
+        confirm_pw  = request.form.get('confirm_password')
+
+        if not current_user.check_password(current_pw):
+            flash('Current password is incorrect.', 'danger')
+            return redirect(url_for('main.change_password'))
+
+        if new_pw != confirm_pw:
+            flash('New passwords do not match.', 'danger')
+            return redirect(url_for('main.change_password'))
+
+        if len(new_pw) < 6:
+            flash('Password must be at least 6 characters.', 'danger')
+            return redirect(url_for('main.change_password'))
+
+        current_user.set_password(new_pw)
+        session.commit()
+        flash('Password changed successfully!', 'success')
+
+        # Redirect based on role
+        if current_user.role == 'admin':
+            return redirect(url_for('main.admin_dashboard'))
+        elif current_user.role == 'librarian':
+            return redirect(url_for('main.librarian_desk'))
+        return redirect(url_for('main.dashboard'))
+
+    return render_template('change_password.html')

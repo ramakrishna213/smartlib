@@ -139,8 +139,6 @@ def _seed():
 
 # ---------- Create Sample Books ----------
 
-# ---------- Create Sample Books ----------
-
 tech = db.session.execute(
     select(Category).where(Category.name == "Technology")
 ).scalar_one()
@@ -226,7 +224,7 @@ for title, author, cat, year, rating, qty in books:
 
 db.session.commit()
 
-print("✅ SmartLib seeded successfully!")
+print("✅ SmartLib seeded successfully!")s
 
 
 if __name__ == '__main__':

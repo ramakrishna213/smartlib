@@ -5,6 +5,9 @@ from functools import wraps
 from sqlalchemy import select, or_, func
 from werkzeug.security import generate_password_hash
 import secrets
+import os
+from werkzeug.utils import secure_filename
+from flask import current_app
 
 auth = Blueprint('auth', __name__)
 main = Blueprint('main', __name__)
@@ -482,30 +485,7 @@ def book_detail(book_id):
         active_loan=active_loan,
         preview_url=preview_url
     )
-@main.route('/books/add', methods=['GET', 'POST'])
-@login_required
-@admin_required
-def add_book():
-    session    = db().session
-    categories = session.execute(select(m().Category)).scalars().all()
-    if request.method == 'POST':
-        qty  = int(request.form.get('quantity', 1))
-        book = m().Book(
-            title=request.form.get('title'),
-            author=request.form.get('author'),
-            category_id=request.form.get('category_id'),
-            publication_year=request.form.get('publication_year'),
-            description=request.form.get('description'),
-            isbn=request.form.get('isbn') or None,
-            total_quantity=qty,
-            available_qty=qty
-        )
-        session.add(book)
-        session.commit()
-        flash('Book added successfully!', 'success')
-        return redirect(url_for('main.books'))
-    return render_template('add_book.html', categories=categories)
-
+v
 
 # ─── Issue Book ────────────────────────────────────
 @main.route('/issue', methods=['GET', 'POST'])

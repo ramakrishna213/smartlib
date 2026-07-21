@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-from flask import Flask
+from flask import Flask, app
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from sqlalchemy import select
@@ -16,6 +16,8 @@ def create_app():
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'smartlib-secret-key-2024')
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///smartlib.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config["BOOK_UPLOAD_FOLDER"] = "static/books"
+    app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
 
     db.init_app(app)
     login_manager.init_app(app)

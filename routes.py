@@ -453,13 +453,15 @@ def book_detail(book_id):
             timeout=10
         )
 
-if response.status_code == 200:
-    data = response.json()
-    print(data)
+        if response.status_code == 200:
+            data = response.json()
 
-    if data.get("items"):
-        volume_id = data["items"][0]["id"]
-        preview_url = f"https://books.google.com/books?id={volume_id}&printsec=frontcover&output=embed"
+            if data.get("items"):
+                volume_id = data["items"][0]["id"]
+                preview_url = (
+                    f"https://books.google.com/books?id={volume_id}"
+                    "&printsec=frontcover&output=embed"
+                )
 
     except Exception:
         preview_url = None

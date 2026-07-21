@@ -1,4 +1,67 @@
-c
+import os
+import base64
+from io import BytesIO
+from datetime import datetime, timedelta
+
+from flask import (
+    Blueprint,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    flash,
+    jsonify,
+    abort,
+    current_app,
+    send_file
+)
+
+from flask_login import (
+    login_user,
+    logout_user,
+    login_required,
+    current_user
+)
+
+from sqlalchemy import (
+    select,
+    func,
+    and_,
+    or_,
+    desc,
+    asc
+)
+
+from werkzeug.security import (
+    generate_password_hash,
+    check_password_hash
+)
+
+from werkzeug.utils import secure_filename
+
+from authlib.integrations.flask_client import OAuth
+
+import qrcode
+
+from app import db
+
+from models import (
+    User,
+    Book,
+    Category,
+    IssuedBook,
+    Notification,
+    Fine
+)
+
+from decorators import (
+    admin_required,
+    librarian_required,
+    member_required
+)
+
+auth = Blueprint("auth", __name__)
+main = Blueprint("main", __name__)
 
 
 # ─── Role Decorators ───────────────────────────────

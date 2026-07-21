@@ -420,14 +420,17 @@ def books():
 @login_required
 def book_detail(book_id):
     session = db().session
-    book    = session.get(m().Book, book_id)
+    book = session.get(m().Book, book_id)
+
     if not book:
         flash('Book not found.', 'danger')
         return redirect(url_for('main.books'))
 
     history = session.execute(
-        select(m().IssuedBook).where(m().IssuedBook.book_id == book_id)
-        .order_by(m().IssuedBook.issue_date.desc()).limit(10)
+        select(m().IssuedBook)
+        .where(m().IssuedBook.book_id == book_id)
+        .order_by(m().IssuedBook.issue_date.desc())
+        .limit(10)
     ).scalars().all()
 
     active_loan = None
@@ -440,10 +443,34 @@ def book_detail(book_id):
             )
         ).scalar_one_or_none()
 
-    return render_template('book_detail.html',
-                           book=book,
-                           history=history,
-                           active_loan=active_loan)
+    preview_url = None
+
+    try:
+        query = f"{book.title} {book.author}"
+        response = requests.get(
+            "https://www.googleapis.com/books/v1/volumes",
+            params={"q": query, "maxResults": 1},
+            timeout=10
+        )
+
+if response.status_code == 200:
+    data = response.json()
+    print(data)
+
+    if data.get("items"):
+        volume_id = data["items"][0]["id"]
+        preview_url = f"https://books.google.com/books?id={volume_id}&printsec=frontcover&output=embed"
+
+    except Exception:
+        preview_url = None
+
+    return render_template(
+        "book_detail.html",
+        book=book,
+        history=history,
+        active_loan=active_loan,
+        preview_url=preview_url
+    )
 @main.route('/books/add', methods=['GET', 'POST'])
 @login_required
 @admin_required

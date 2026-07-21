@@ -60,12 +60,19 @@
       </div>
 
       <!-- Google Books Viewer -->
-     <iframe
+    {% if preview_url %}
+<iframe
+    src="{{ preview_url }}"
     width="100%"
     height="600"
-    style="border:none;background:#f8fafc"
-    src="https://books.google.com/books?vid=ISBN{{ book.isbn }}&printsec=frontcover&output=embed">
+    style="border:none;background:#f8fafc">
 </iframe>
+{% else %}
+<div style="padding:40px;text-align:center">
+    <h3>No Google Books Preview Available</h3>
+    <p>This book is not available for preview on Google Books.</p>
+</div>
+{% endif %}
 
       <!-- Controls -->
       <div style="background:#f8fafc;padding:10px 14px;
@@ -272,28 +279,94 @@
 </div>
 
 <!-- Google Books API -->
-<iframe
-    width="100%"
-    height="600"
-    frameborder="0"
-    src="https://books.google.com/books?vid=ISBN{{ book.isbn }}&printsec=frontcover&output=embed">
-</iframe>
+<script src="https://www.google.com/books/jsapi.js"></script>
 <script>
-function toggleReader() {
-    const reader = document.getElementById("book-reader");
-    const icon = document.getElementById("read-icon");
-    const text = document.getElementById("read-text");
+  var viewer     = null;
+  var bookLoaded = false;
 
-    if (reader.style.display === "none") {
-        reader.style.display = "block";
-        icon.className = "fa-solid fa-xmark";
-        text.textContent = "Close Reader";
+  function toggleReader() {
+    const reader = document.getElementById('book-reader');
+    const icon   = document.getElementById('read-icon');
+    const text   = document.getElementById('read-text');
+
+    if (reader.style.display === 'none') {
+      reader.style.display = 'block';
+      icon.className = 'fa-solid fa-xmark';
+      text.textContent = 'Close Reader';
+      reader.scrollIntoView({ behavior: 'smooth' });
+      if (!bookLoaded) {
+        loadBook();
+        bookLoaded = true;
+      }
     } else {
-        reader.style.display = "none";
-        icon.className = "fa-solid fa-book-open";
-        text.textContent = "Read This Book";
+      reader.style.display = 'none';
+      icon.className = 'fa-solid fa-book-open';
+      text.textContent = 'Read This Book';
     }
-}
+  }
+
+  function loadBook() {
+    const canvas = document.getElementById('viewerCanvas');
+    const title  = "{{ book.title }}";
+    const author = "{{ book.author }}";
+
+    canvas.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;
+                  justify-content:center;height:100%;padding:20px;text-align:center">
+        <i class="fa-solid fa-spinner fa-spin"
+           style="font-size:32px;color:#2563eb;margin-bottom:16px"></i>
+        <p style="color:#6b7280;font-size:14px">Loading book preview...</p>
+      </div>`;
+
+    google.books.load();
+    google.books.setOnLoadCallback(function() {
+      viewer = new google.books.DefaultViewer(canvas);
+      viewer.load(
+        title + ' ' + author,
+        function() { console.log('Book loaded!'); },
+        function() {
+          canvas.innerHTML = `
+            <div style="display:flex;flex-direction:column;align-items:center;
+                        justify-content:center;height:100%;padding:30px;text-align:center">
+              <i class="fa-solid fa-book-open"
+                 style="font-size:48px;color:#d1d5db;margin-bottom:16px"></i>
+              <div style="font-size:15px;font-weight:600;color:#374151;margin-bottom:8px">
+                Preview not available inside app
+              </div>
+              <p style="font-size:13px;color:#6b7280;margin-bottom:16px">
+                Click below to read this book online
+              </p>
+              <div style="display:flex;flex-direction:column;gap:10px;width:100%">
+                <a href="https://books.google.com/books?q=${encodeURIComponent(title+' '+author)}"
+                   target="_blank"
+                   style="background:#4285f4;color:#fff;padding:12px;
+                          border-radius:8px;text-decoration:none;font-size:13px;
+                          font-weight:600;display:flex;align-items:center;
+                          justify-content:center;gap:8px">
+                  <i class="fa-brands fa-google"></i> Read on Google Books
+                </a>
+                <a href="https://openlibrary.org/search?q=${encodeURIComponent(title+' '+author)}"
+                   target="_blank"
+                   style="background:#16a34a;color:#fff;padding:12px;
+                          border-radius:8px;text-decoration:none;font-size:13px;
+                          font-weight:600;display:flex;align-items:center;
+                          justify-content:center;gap:8px">
+                  <i class="fa-solid fa-book"></i> Read on Open Library
+                </a>
+                <a href="https://archive.org/search?query=${encodeURIComponent(title+' '+author)}"
+                   target="_blank"
+                   style="background:#d97706;color:#fff;padding:12px;
+                          border-radius:8px;text-decoration:none;font-size:13px;
+                          font-weight:600;display:flex;align-items:center;
+                          justify-content:center;gap:8px">
+                  <i class="fa-solid fa-archive"></i> Read on Internet Archive
+                </a>
+              </div>
+            </div>`;
+        }
+      );
+    });
+  }
 </script>
 
 {% endblock %}

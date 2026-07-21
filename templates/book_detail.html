@@ -281,7 +281,6 @@
 <!-- Google Books API -->
 <script src="https://www.google.com/books/jsapi.js"></script>
 <script>
-  var viewer     = null;
   var bookLoaded = false;
 
   function toggleReader() {
@@ -310,6 +309,7 @@
     const title  = "{{ book.title }}";
     const author = "{{ book.author }}";
 
+    // Show loading
     canvas.innerHTML = `
       <div style="display:flex;flex-direction:column;align-items:center;
                   justify-content:center;height:100%;padding:20px;text-align:center">
@@ -318,54 +318,105 @@
         <p style="color:#6b7280;font-size:14px">Loading book preview...</p>
       </div>`;
 
-    google.books.load();
-    google.books.setOnLoadCallback(function() {
-      viewer = new google.books.DefaultViewer(canvas);
-      viewer.load(
-        title + ' ' + author,
-        function() { console.log('Book loaded!'); },
-        function() {
+    // Search Open Library API for the book
+    const searchUrl = `https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}&limit=1`;
+
+    fetch(searchUrl)
+      .then(res => res.json())
+      .then(data => {
+        if (data.docs && data.docs.length > 0) {
+          const book = data.docs[0];
+          const olid = book.key; // e.g. /works/OL123W
+
+          // Try to embed Open Library reader
+          const embedUrl = `https://openlibrary.org${olid}?layout=embed`;
+
           canvas.innerHTML = `
-            <div style="display:flex;flex-direction:column;align-items:center;
-                        justify-content:center;height:100%;padding:30px;text-align:center">
-              <i class="fa-solid fa-book-open"
-                 style="font-size:48px;color:#d1d5db;margin-bottom:16px"></i>
-              <div style="font-size:15px;font-weight:600;color:#374151;margin-bottom:8px">
-                Preview not available inside app
-              </div>
-              <p style="font-size:13px;color:#6b7280;margin-bottom:16px">
-                Click below to read this book online
-              </p>
-              <div style="display:flex;flex-direction:column;gap:10px;width:100%">
-                <a href="https://books.google.com/books?q=${encodeURIComponent(title+' '+author)}"
-                   target="_blank"
-                   style="background:#4285f4;color:#fff;padding:12px;
-                          border-radius:8px;text-decoration:none;font-size:13px;
-                          font-weight:600;display:flex;align-items:center;
-                          justify-content:center;gap:8px">
-                  <i class="fa-brands fa-google"></i> Read on Google Books
-                </a>
-                <a href="https://openlibrary.org/search?q=${encodeURIComponent(title+' '+author)}"
-                   target="_blank"
-                   style="background:#16a34a;color:#fff;padding:12px;
-                          border-radius:8px;text-decoration:none;font-size:13px;
-                          font-weight:600;display:flex;align-items:center;
-                          justify-content:center;gap:8px">
-                  <i class="fa-solid fa-book"></i> Read on Open Library
-                </a>
-                <a href="https://archive.org/search?query=${encodeURIComponent(title+' '+author)}"
-                   target="_blank"
-                   style="background:#d97706;color:#fff;padding:12px;
-                          border-radius:8px;text-decoration:none;font-size:13px;
-                          font-weight:600;display:flex;align-items:center;
-                          justify-content:center;gap:8px">
-                  <i class="fa-solid fa-archive"></i> Read on Internet Archive
-                </a>
-              </div>
-            </div>`;
+            <div style="background:#1e293b;padding:8px 14px;
+                        display:flex;align-items:center;gap:8px">
+              <i class="fa-solid fa-book-open" style="color:#60a5fa"></i>
+              <span style="color:#fff;font-size:12px">${title} — Open Library</span>
+            </div>
+            <iframe src="${embedUrl}"
+                    style="width:100%;height:460px;border:none"
+                    allowfullscreen>
+            </iframe>`;
+        } else {
+          showOptions(canvas, title, author);
         }
-      );
-    });
+      })
+      .catch(() => {
+        showOptions(canvas, title, author);
+      });
+  }
+
+  function showOptions(canvas, title, author) {
+    canvas.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;
+                  justify-content:center;height:100%;padding:24px;text-align:center">
+
+        <i class="fa-solid fa-book-open"
+           style="font-size:48px;color:#d1d5db;margin-bottom:16px"></i>
+
+        <div style="font-size:15px;font-weight:600;color:#374151;margin-bottom:6px">
+          Read "${title}" Online
+        </div>
+        <p style="font-size:12px;color:#6b7280;margin-bottom:20px">
+          Choose a platform to read this book for free
+        </p>
+
+        <div style="display:flex;flex-direction:column;gap:10px;width:100%">
+
+          <a href="https://openlibrary.org/search?q=${encodeURIComponent(title+' '+author)}"
+             target="_blank"
+             style="background:#16a34a;color:#fff;padding:12px 16px;
+                    border-radius:10px;text-decoration:none;font-size:13px;
+                    font-weight:600;display:flex;align-items:center;gap:10px">
+            <i class="fa-solid fa-book" style="font-size:16px"></i>
+            <div style="text-align:left">
+              <div>Open Library</div>
+              <div style="font-size:11px;opacity:0.85">Free borrow & read online</div>
+            </div>
+          </a>
+
+          <a href="https://books.google.com/books?q=${encodeURIComponent(title+' '+author)}"
+             target="_blank"
+             style="background:#4285f4;color:#fff;padding:12px 16px;
+                    border-radius:10px;text-decoration:none;font-size:13px;
+                    font-weight:600;display:flex;align-items:center;gap:10px">
+            <i class="fa-brands fa-google" style="font-size:16px"></i>
+            <div style="text-align:left">
+              <div>Google Books</div>
+              <div style="font-size:11px;opacity:0.85">Preview available chapters</div>
+            </div>
+          </a>
+
+          <a href="https://archive.org/search?query=${encodeURIComponent(title+' '+author)}"
+             target="_blank"
+             style="background:#d97706;color:#fff;padding:12px 16px;
+                    border-radius:10px;text-decoration:none;font-size:13px;
+                    font-weight:600;display:flex;align-items:center;gap:10px">
+            <i class="fa-solid fa-archive" style="font-size:16px"></i>
+            <div style="text-align:left">
+              <div>Internet Archive</div>
+              <div style="font-size:11px;opacity:0.85">Free digital books</div>
+            </div>
+          </a>
+
+          <a href="https://www.pdfdrive.com/search?q=${encodeURIComponent(title)}"
+             target="_blank"
+             style="background:#7c3aed;color:#fff;padding:12px 16px;
+                    border-radius:10px;text-decoration:none;font-size:13px;
+                    font-weight:600;display:flex;align-items:center;gap:10px">
+            <i class="fa-solid fa-file-pdf" style="font-size:16px"></i>
+            <div style="text-align:left">
+              <div>PDF Drive</div>
+              <div style="font-size:11px;opacity:0.85">Download free PDF</div>
+            </div>
+          </a>
+
+        </div>
+      </div>`;
   }
 </script>
 

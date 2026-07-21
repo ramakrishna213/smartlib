@@ -1,27 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
-from flask_login import login_user, logout_user, login_required, current_user
-from datetime import date, timedelta, datetime
-from functools import wraps
-from sqlalchemy import select, or_, func
-from werkzeug.security import generate_password_hash
-import secrets
-import requests
-
-auth = Blueprint('auth', __name__)
-main = Blueprint('main', __name__)
-
-
-def db():
-    from flask_sqlalchemy import SQLAlchemy
-    for ext in current_app.extensions.values():
-        if isinstance(ext, SQLAlchemy):
-            return ext
-    raise RuntimeError("No SQLAlchemy extension found")
-
-
-def m():
-    import models
-    return models
+c
 
 
 # ─── Role Decorators ───────────────────────────────

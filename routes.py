@@ -446,27 +446,34 @@ def book_detail(book_id):
     preview_url = None
 
     try:
-        query = f"{book.title} {book.author}"
+        query = f'intitle:"{book.title}" inauthor:"{book.author}"'
+
         response = requests.get(
-          "https://www.googleapis.com/books/v1/volumes",
-            params={"q": query, "maxResults": 1},
+            "https://www.googleapis.com/books/v1/volumes",
+            params={
+                "q": query,
+                "maxResults": 1
+            },
             timeout=10
         )
-        print(response.status_code)
-        print(response.json())
+
+        print("Status Code:", response.status_code)
 
         if response.status_code == 200:
             data = response.json()
+            print("Google Books Response:", data)
 
             if data.get("items"):
-                volume_id = data["items"][0]["id"]
+                volume = data["items"][0]
+                volume_id = volume["id"]
+
                 preview_url = (
                     f"https://books.google.com/books?id={volume_id}"
                     "&printsec=frontcover&output=embed"
                 )
 
-    except Exception:
-        preview_url = None
+    except Exception as e:
+        print("Google Books Error:", e)
 
     return render_template(
         "book_detail.html",

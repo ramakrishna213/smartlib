@@ -1,67 +1,26 @@
-import os
-import base64
-from io import BytesIO
-from datetime import datetime, timedelta
+from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
+from flask_login import login_user, logout_user, login_required, current_user
+from datetime import date, timedelta, datetime
+from functools import wraps
+from sqlalchemy import select, or_, func
+from werkzeug.security import generate_password_hash
+import secrets
 
-from flask import (
-    Blueprint,
-    render_template,
-    request,
-    redirect,
-    url_for,
-    flash,
-    jsonify,
-    abort,
-    current_app,
-    send_file
-)
+auth = Blueprint('auth', __name__)
+main = Blueprint('main', __name__)
 
-from flask_login import (
-    login_user,
-    logout_user,
-    login_required,
-    current_user
-)
 
-from sqlalchemy import (
-    select,
-    func,
-    and_,
-    or_,
-    desc,
-    asc
-)
+def db():
+    from flask_sqlalchemy import SQLAlchemy
+    for ext in current_app.extensions.values():
+        if isinstance(ext, SQLAlchemy):
+            return ext
+    raise RuntimeError("No SQLAlchemy extension found")
 
-from werkzeug.security import (
-    generate_password_hash,
-    check_password_hash
-)
 
-from werkzeug.utils import secure_filename
-
-from authlib.integrations.flask_client import OAuth
-
-import qrcode
-
-from app import db
-
-from models import (
-    User,
-    Book,
-    Category,
-    IssuedBook,
-    Notification,
-    Fine
-)
-
-from decorators import (
-    admin_required,
-    librarian_required,
-    member_required
-)
-
-auth = Blueprint("auth", __name__)
-main = Blueprint("main", __name__)
+def m():
+    import models
+    return models
 
 
 # ─── Role Decorators ───────────────────────────────

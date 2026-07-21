@@ -5,6 +5,7 @@ from functools import wraps
 from sqlalchemy import select, or_, func
 from werkzeug.security import generate_password_hash
 import secrets
+import requests
 
 auth = Blueprint('auth', __name__)
 main = Blueprint('main', __name__)

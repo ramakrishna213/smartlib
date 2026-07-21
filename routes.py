@@ -448,10 +448,12 @@ def book_detail(book_id):
     try:
         query = f"{book.title} {book.author}"
         response = requests.get(
-            "https://www.googleapis.com/books/v1/volumes",
+          "https://www.googleapis.com/books/v1/volumes",
             params={"q": query, "maxResults": 1},
             timeout=10
         )
+        print(response.status_code)
+        print(response.json())
 
         if response.status_code == 200:
             data = response.json()

@@ -434,26 +434,55 @@ def add_book():
 @main.route('/books')
 @login_required
 def books():
-    session      = db().session
-    category_id  = request.args.get('category')
-    search       = request.args.get('search', '')
-    availability = request.args.get('availability')
+    cache = current_app.extensions["cache"]
+
+    session = db().session
+    category_id = request.args.get("category")
+    search = request.args.get("search", "")
+    availability = request.args.get("availability")
+
+    # Create cache key
+    cache_key = f"books_{category_id}_{search}_{availability}"
+
+    # Check cache first
+    cached_books = cache.get(cache_key)
+    if cached_books is not None:
+        categories = session.execute(select(m().Category)).scalars().all()
+        return render_template(
+            "books.html",
+            books=cached_books,
+            categories=categories,
+            search=search,
+        )
 
     stmt = select(m().Book)
+
     if search:
-        stmt = stmt.where(or_(
-            m().Book.title.ilike(f'%{search}%'),
-            m().Book.author.ilike(f'%{search}%')
-        ))
+        stmt = stmt.where(
+            or_(
+                m().Book.title.ilike(f"%{search}%"),
+                m().Book.author.ilike(f"%{search}%"),
+            )
+        )
+
     if category_id:
         stmt = stmt.where(m().Book.category_id == category_id)
-    if availability == 'available':
+
+    if availability == "available":
         stmt = stmt.where(m().Book.available_qty > 0)
 
-    all_books  = session.execute(stmt).scalars().all()
+    all_books = session.execute(stmt).scalars().all()
     categories = session.execute(select(m().Category)).scalars().all()
-    return render_template('books.html', books=all_books,
-                           categories=categories, search=search)
+
+    # Store result in cache
+    cache.set(cache_key, all_books, timeout=300)
+
+    return render_template(
+        "books.html",
+        books=all_books,
+        categories=categories,
+        search=search,
+    )
 
 
 @main.route('/books/<int:book_id>')

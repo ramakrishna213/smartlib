@@ -8,6 +8,7 @@ import secrets
 import os
 from werkzeug.utils import secure_filename
 from flask import current_app
+from flask_caching import Cache
 
 auth = Blueprint('auth', __name__)
 main = Blueprint('main', __name__)

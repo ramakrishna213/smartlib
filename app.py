@@ -13,11 +13,15 @@ login_manager = LoginManager()
 
 def create_app():
     app = Flask(__name__)
+
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'smartlib-secret-key-2024')
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///smartlib.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config["BOOK_UPLOAD_FOLDER"] = "static/books"
-    app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
+
+    # Upload configuration
+    app.config['UPLOAD_FOLDER'] = os.path.join(app.static_folder, 'uploads', 'books')
+    app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50 MB
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
     db.init_app(app)
     login_manager.init_app(app)

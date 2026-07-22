@@ -9,7 +9,7 @@
       <p class="page-subtitle">Manage library books and inventory.</p>
     </div>
     {% if current_user.role == 'admin' %}
-    <a href="{{ url_for('main.add_book') }}" class="btn btn-primary btn-sm">
+    <a href="{{ url_for('main.books') }}" class="btn btn-primary btn-sm">
       <i class="fa-solid fa-plus"></i> Add
     </a>
     {% endif %}

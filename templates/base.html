@@ -316,7 +316,7 @@
     {% endif %}
     {% if current_user.role == 'admin' %}
   {% if current_user.role == 'admin' %}
-<a href="{{ url_for('main.add_book') }}" onclick="closeSidebar()"
+<a href="{{ url_for('main.books') }}" onclick="closeSidebar()"
    style="display:flex;align-items:center;gap:14px;padding:14px 20px;
           text-decoration:none;color:#374151;font-size:14px;font-weight:500">
   <i class="fa-solid fa-plus" style="color:#2563eb;width:20px;text-align:center"></i>
@@ -402,7 +402,7 @@
     <span>Home</span>
   </a>
   <a href="{{ url_for('main.books') }}"
-     class="nav-item {% if request.endpoint in ['main.books','main.book_detail','main.add_book'] %}active{% endif %}">
+     class="nav-item {% if request.endpoint in ['main.books','main.book_detail','main.books'] %}active{% endif %}">
     <i class="fa-solid fa-book"></i>
     <span>Books</span>
   </a>

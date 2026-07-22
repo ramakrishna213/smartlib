@@ -485,7 +485,7 @@ def book_detail(book_id):
         active_loan=active_loan,
         preview_url=preview_url
     )
-v
+
 
 # ─── Issue Book ────────────────────────────────────
 @main.route('/issue', methods=['GET', 'POST'])

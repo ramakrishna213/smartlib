@@ -65,25 +65,25 @@ def init_db_models(db):
         books = db.relationship('Book', backref='category', lazy=True)
 
     class Book(db.Model):
-    __tablename__    = 'books'
-    id               = db.Column(db.Integer, primary_key=True)
-    title            = db.Column(db.String(200), nullable=False)
-    author           = db.Column(db.String(120), nullable=False)
-    category_id      = db.Column(db.Integer, db.ForeignKey('categories.id'))
-    publication_year = db.Column(db.Integer)
-    rating           = db.Column(db.Float, default=0.0)
-    total_quantity   = db.Column(db.Integer, default=1)
-    available_qty    = db.Column(db.Integer, default=1)
-    cover_image      = db.Column(db.String(200), nullable=True)
-    pdf_file         = db.Column(db.String(255), nullable=True)
-    description      = db.Column(db.Text, nullable=True)
-    isbn             = db.Column(db.String(20), unique=True, nullable=True)
-    created_at       = db.Column(db.DateTime, default=datetime.utcnow)
-    issued_books     = db.relationship('IssuedBook', backref='book', lazy=True)
+        __tablename__ = 'books'
+        id              = db.Column(db.Integer, primary_key=True)
+        title           = db.Column(db.String(200), nullable=False)
+        author          = db.Column(db.String(120), nullable=False)
+        category_id     = db.Column(db.Integer, db.ForeignKey('categories.id'))
+        publication_year = db.Column(db.Integer)
+        rating          = db.Column(db.Float, default=0.0)
+        total_quantity  = db.Column(db.Integer, default=1)
+        available_qty   = db.Column(db.Integer, default=1)
+        cover_image     = db.Column(db.String(200), nullable=True)
+        pdf_file        = db.Column(db.String(255), nullable=True)
+        description     = db.Column(db.Text, nullable=True)
+        isbn            = db.Column(db.String(20), unique=True, nullable=True)
+        created_at      = db.Column(db.DateTime, default=datetime.utcnow)
+        issued_books    = db.relationship('IssuedBook', backref='book', lazy=True)
 
-    @property
-    def is_available(self):
-        return self.available_qty > 0
+        @property
+        def is_available(self):
+            return self.available_qty > 0
 
     class IssuedBook(db.Model):
         __tablename__ = 'issued_books'

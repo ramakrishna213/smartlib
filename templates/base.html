@@ -300,6 +300,14 @@
       <i class="fa-solid fa-book" style="color:#2563eb;width:20px;text-align:center"></i>
       Book Catalog
     </a>
+    {% if current_user.role == 'admin' %}
+<a href="{{ url_for('main.add_book') }}" onclick="closeSidebar()"
+   style="display:flex;align-items:center;gap:14px;padding:14px 20px;
+          text-decoration:none;color:#374151;font-size:14px;font-weight:500">
+  <i class="fa-solid fa-plus" style="color:#2563eb;width:20px;text-align:center"></i>
+  Add Book
+</a>
+{% endif %}
     {% if current_user.role in ['admin', 'librarian'] %}
     <a href="{{ url_for('main.issue_book') }}" onclick="closeSidebar()"
        style="display:flex;align-items:center;gap:14px;padding:14px 20px;

@@ -485,6 +485,49 @@ def book_detail(book_id):
         active_loan=active_loan,
         preview_url=preview_url
     )
+@main.route('/books/<int:book_id>/upload-pdf', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def upload_pdf(book_id):
+    import os
+    from werkzeug.utils import secure_filename
+    from flask import current_app
+
+    session = db().session
+    book    = session.get(m().Book, book_id)
+
+    if not book:
+        flash('Book not found.', 'danger')
+        return redirect(url_for('main.books'))
+
+    if request.method == 'POST':
+        if 'pdf_file' not in request.files:
+            flash('No file selected.', 'danger')
+            return redirect(url_for('main.upload_pdf', book_id=book_id))
+
+        file = request.files['pdf_file']
+
+        if file.filename == '':
+            flash('No file selected.', 'danger')
+            return redirect(url_for('main.upload_pdf', book_id=book_id))
+
+        if file and file.filename.endswith('.pdf'):
+            filename = secure_filename(f"book_{book_id}_{file.filename}")
+            upload_folder = os.path.join(
+                current_app.static_folder, 'uploads', 'books'
+            )
+            os.makedirs(upload_folder, exist_ok=True)
+            filepath = os.path.join(upload_folder, filename)
+            file.save(filepath)
+
+            book.pdf_file = filename
+            session.commit()
+            flash(f'PDF uploaded for "{book.title}"!', 'success')
+            return redirect(url_for('main.book_detail', book_id=book_id))
+        else:
+            flash('Only PDF files allowed.', 'danger')
+
+    return render_template('upload_pdf.html', book=book)
 
 
 # ─── Issue Book ────────────────────────────────────

@@ -6,9 +6,11 @@ from flask import Flask, app
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from sqlalchemy import select
+from flask_caching import Cache
 
 db = SQLAlchemy()
 login_manager = LoginManager()
+cache = Cache()
 
 
 def create_app():
@@ -24,6 +26,10 @@ def create_app():
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
     db.init_app(app)
+    cache.init_app(app, config={
+    "CACHE_TYPE": "SimpleCache",
+    "CACHE_DEFAULT_TIMEOUT": 300
+})
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
 

@@ -392,6 +392,43 @@ def librarian_desk():
                            overdue=overdue,
                            pending_fines=pending_fines)
 
+@main.route('/add-book', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def add_book():
+    session = db().session
+
+    if request.method == 'POST':
+        title = request.form.get('title')
+        author = request.form.get('author')
+        category_id = request.form.get('category_id')
+        quantity = request.form.get('total_quantity')
+
+        book = m().Book(
+            title=title,
+            author=author,
+            category_id=category_id,
+            total_quantity=quantity,
+            available_qty=quantity
+        )
+
+        session.add(book)
+        session.commit()
+
+        flash("Book added successfully!", "success")
+        return redirect(url_for('main.books'))
+
+    categories = session.execute(
+        select(m().Category)
+    ).scalars().all()
+
+    return render_template(
+        "add_book.html",
+        categories=categories
+    )
+
+
+
 
 # ─── Books ─────────────────────────────────────────
 @main.route('/books')

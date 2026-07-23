@@ -6,9 +6,9 @@ from sqlalchemy import select, or_, func
 from werkzeug.security import generate_password_hash
 import secrets
 import os
+import requests
 from werkzeug.utils import secure_filename
-from flask import current_app
-
+from app import cache
 
 auth = Blueprint('auth', __name__)
 main = Blueprint('main', __name__)
@@ -435,7 +435,7 @@ def add_book():
 @main.route('/books')
 @login_required
 def books():
-    cache = current_app.extensions["cache"]
+    
 
     session = db().session
     category_id = request.args.get("category")
@@ -476,7 +476,7 @@ def books():
     categories = session.execute(select(m().Category)).scalars().all()
 
     # Store result in cache
-    cache.set(cache_key, all_books)
+    cache[cache_key] = all_books
 
     return render_template(
         "books.html",

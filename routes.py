@@ -435,18 +435,16 @@ def add_book():
 @main.route('/books')
 @login_required
 def books():
-    
-
     session = db().session
+
     category_id = request.args.get("category")
     search = request.args.get("search", "")
     availability = request.args.get("availability")
 
-    # Create cache key
     cache_key = f"books_{category_id}_{search}_{availability}"
 
-    # Check cache first
     cached_books = cache.get(cache_key)
+
     if cached_books is not None:
         categories = session.execute(select(m().Category)).scalars().all()
         return render_template(
@@ -475,82 +473,13 @@ def books():
     all_books = session.execute(stmt).scalars().all()
     categories = session.execute(select(m().Category)).scalars().all()
 
-    # Store result in cache
-    cache[cache_key] = all_books
+    cache.set(cache_key, all_books, timeout=300)
 
     return render_template(
         "books.html",
         books=all_books,
         categories=categories,
         search=search,
-    )
-
-
-@main.route('/books/<int:book_id>')
-@login_required
-def book_detail(book_id):
-    session = db().session
-    book = session.get(m().Book, book_id)
-
-    if not book:
-        flash('Book not found.', 'danger')
-        return redirect(url_for('main.books'))
-
-    history = session.execute(
-        select(m().IssuedBook)
-        .where(m().IssuedBook.book_id == book_id)
-        .order_by(m().IssuedBook.issue_date.desc())
-        .limit(10)
-    ).scalars().all()
-
-    active_loan = None
-    if current_user.role == 'member':
-        active_loan = session.execute(
-            select(m().IssuedBook).where(
-                m().IssuedBook.user_id == current_user.id,
-                m().IssuedBook.book_id == book_id,
-                m().IssuedBook.status == 'active'
-            )
-        ).scalar_one_or_none()
-
-    preview_url = None
-
-    try:
-        query = f'intitle:"{book.title}" inauthor:"{book.author}"'
-
-        response = requests.get(
-            "https://www.googleapis.com/books/v1/volumes",
-            params={
-                "q": query,
-                "maxResults": 1
-            },
-            timeout=10
-        )
-
-        print("Status Code:", response.status_code)
-
-        if response.status_code == 200:
-            data = response.json()
-            print("Google Books Response:", data)
-
-            if data.get("items"):
-                volume = data["items"][0]
-                volume_id = volume["id"]
-
-                preview_url = (
-                    f"https://books.google.com/books?id={volume_id}"
-                    "&printsec=frontcover&output=embed"
-                )
-
-    except Exception as e:
-        print("Google Books Error:", e)
-
-    return render_template(
-        "book_detail.html",
-        book=book,
-        history=history,
-        active_loan=active_loan,
-        preview_url=preview_url
     )
 @main.route('/books/<int:book_id>/upload-pdf', methods=['GET', 'POST'])
 @login_required

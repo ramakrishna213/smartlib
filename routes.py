@@ -481,6 +481,18 @@ def books():
         categories=categories,
         search=search,
     )
+@main.route('/book/<int:book_id>')
+@login_required
+def book_detail(book_id):
+    session = db().session
+
+    book = session.get(m().Book, book_id)
+
+    if book is None:
+        flash("Book not found.", "danger")
+        return redirect(url_for("main.books"))
+
+    return render_template("book_detail.html", book=book)
 @main.route('/books/<int:book_id>/upload-pdf', methods=['GET', 'POST'])
 @login_required
 @admin_required

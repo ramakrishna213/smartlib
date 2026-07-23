@@ -441,19 +441,6 @@ def books():
     search = request.args.get("search", "")
     availability = request.args.get("availability")
 
-    cache_key = f"books_{category_id}_{search}_{availability}"
-
-    cached_books = cache.get(cache_key)
-
-    if cached_books is not None:
-        categories = session.execute(select(m().Category)).scalars().all()
-        return render_template(
-            "books.html",
-            books=cached_books,
-            categories=categories,
-            search=search,
-        )
-
     stmt = select(m().Book)
 
     if search:
@@ -473,14 +460,38 @@ def books():
     all_books = session.execute(stmt).scalars().all()
     categories = session.execute(select(m().Category)).scalars().all()
 
-    cache.set(cache_key, all_books, timeout=300)
-
     return render_template(
         "books.html",
         books=all_books,
         categories=categories,
         search=search,
     )
+@main.route('/book/<int:book_id>')
+@login_required
+def book_detail(book_id):
+    session = db().session
+
+    book = session.execute(
+        select(m().Book).where(m().Book.id == book_id)
+    ).scalar_one_or_none()
+
+    if book is None:
+        flash("Book not found.", "danger")
+        return redirect(url_for("main.books"))
+
+    return render_template("book_detail.html", book=book)
+@main.route('/book/<int:book_id>')
+@login_required
+def book_detail(book_id):
+    session = db().session
+
+    book = session.get(m().Book, book_id)
+
+    if not book:
+        flash("Book not found.", "danger")
+        return redirect(url_for("main.books"))
+
+    return render_template("book_detail.html", book=book)
 @main.route('/book/<int:book_id>')
 @login_required
 def book_detail(book_id):

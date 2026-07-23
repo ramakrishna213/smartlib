@@ -1,0 +1,21 @@
+{
+  "name": "smartlib-capacitor-android",
+  "version": "1.0.0",
+  "description": "SmartLib Android application using Capacitor",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "capacitor serve",
+    "android": "capacitor run android",
+    "sync": "capacitor sync"
+  },
+  "dependencies": {
+    "@capacitor/core": "^3.0.0",
+    "@capacitor/android": "^3.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^4.0.0"
+  },
+  "author": "Your Name",
+  "license": "MIT"
+}

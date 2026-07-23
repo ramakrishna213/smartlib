@@ -476,7 +476,7 @@ def books():
     categories = session.execute(select(m().Category)).scalars().all()
 
     # Store result in cache
-   cache[cache_key] = all_books
+    cache.set(cache_key, all_books)
 
     return render_template(
         "books.html",

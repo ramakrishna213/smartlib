@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">SmartLib</string>
+    <string name="app_description">SmartLib is your digital library solution.</string>
+    <color name="primary_color">#6200EE</color>
+    <color name="primary_dark_color">#3700B3</color>
+    <color name="accent_color">#03DAC5</color>
+</resources>

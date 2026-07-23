@@ -8,7 +8,7 @@ import secrets
 import os
 from werkzeug.utils import secure_filename
 from flask import current_app
-from flask_caching import Cache
+
 
 auth = Blueprint('auth', __name__)
 main = Blueprint('main', __name__)
@@ -476,7 +476,7 @@ def books():
     categories = session.execute(select(m().Category)).scalars().all()
 
     # Store result in cache
-    cache.set(cache_key, all_books, timeout=300)
+   cache[cache_key] = all_books
 
     return render_template(
         "books.html",

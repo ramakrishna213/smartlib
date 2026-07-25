@@ -435,37 +435,26 @@ def add_book():
 @main.route('/books')
 @login_required
 def books():
-    session = db().session
-
-    category_id = request.args.get("category")
-    search = request.args.get("search", "")
-    availability = request.args.get("availability")
+    session      = db().session
+    category_id  = request.args.get('category')
+    search       = request.args.get('search', '')
+    availability = request.args.get('availability')
 
     stmt = select(m().Book)
-
     if search:
-        stmt = stmt.where(
-            or_(
-                m().Book.title.ilike(f"%{search}%"),
-                m().Book.author.ilike(f"%{search}%"),
-            )
-        )
-
+        stmt = stmt.where(or_(
+            m().Book.title.ilike(f'%{search}%'),
+            m().Book.author.ilike(f'%{search}%')
+        ))
     if category_id:
         stmt = stmt.where(m().Book.category_id == category_id)
-
-    if availability == "available":
+    if availability == 'available':
         stmt = stmt.where(m().Book.available_qty > 0)
 
-    all_books = session.execute(stmt).scalars().all()
+    all_books  = session.execute(stmt).scalars().all()
     categories = session.execute(select(m().Category)).scalars().all()
-
-    return render_template(
-        "books.html",
-        books=all_books,
-        categories=categories,
-        search=search,
-    )
+    return render_template('books.html', books=all_books,
+                           categories=categories, search=search)
 @main.route('/book/<int:book_id>')
 @login_required
 def book_detail(book_id):

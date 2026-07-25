@@ -2,16 +2,13 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-from flask import Flask, app
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from sqlalchemy import select
-from flask_caching import Cache
 
 db = SQLAlchemy()
 login_manager = LoginManager()
-cache = Cache()
-
 
 def create_app():
     app = Flask(__name__)
@@ -26,10 +23,6 @@ def create_app():
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
     db.init_app(app)
-    cache.init_app(app, config={
-    "CACHE_TYPE": "SimpleCache",
-    "CACHE_DEFAULT_TIMEOUT": 300
-})
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
 
@@ -65,8 +58,12 @@ def create_app():
     with app.app_context():
         from models import init_db_models
         User, Book, Category, IssuedBook, Fine, Notification = init_db_models(db)
+
         db.create_all()
-        _seed()
+
+        # Seed only if the database is empty
+        if db.session.execute(select(User)).first() is None:
+            _seed()
 
         from routes import auth, main
         app.register_blueprint(auth)
@@ -187,7 +184,7 @@ def _seed():
         ("The Selfish Gene", "Richard Dawkins", science.id, 1976, 4.7, 2),
         ("The Lean Startup", "Eric Ries", business.id, 2011, 4.6, 3),
         ("Zero to One", "Peter Thiel", business.id, 2014, 4.7, 2),
-    ]
+        ]
 
     for title, author, cat, year, rating, qty in books:
         existing = db.session.execute(select(Book).where(Book.title == title)).scalar_one_or_none()

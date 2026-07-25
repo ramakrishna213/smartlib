@@ -8,7 +8,7 @@ import secrets
 import os
 import requests
 from werkzeug.utils import secure_filename
-from app import cache
+
 
 auth = Blueprint('auth', __name__)
 main = Blueprint('main', __name__)

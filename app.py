@@ -11,34 +11,43 @@ from api_routes import api
 
 db = SQLAlchemy()
 login_manager = LoginManager()
-
+from sqlalchemy import select
+@login_manager.user_loader
+def load_user(user_id):
+    from models import User
+    return db.session.get(User, int(user_id))
 def create_app():
     app = Flask(__name__)
 
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'smartlib-secret-key-2024')
+    app.config['SECRET_KEY'] = os.environ.get(
+        'SECRET_KEY',
+        'smartlib-secret-key-2024'
+    )
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///smartlib.db'
-    app.config['SQLALALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     # Upload configuration
-    app.config['UPLOAD_FOLDER'] = os.path.join(app.static_folder, 'uploads', 'books')
+    app.config['UPLOAD_FOLDER'] = os.path.join(
+        app.static_folder,
+        'uploads',
+        'books'
+    )
     app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
 
+    # Initialize extensions
     db.init_app(app)
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
 
-    # Register blueprints  👈 HERE
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(main_bp)
-    app.register_blueprint(api)
+    # Initialize models
+    from models import init_db_models
+    User, Book, Category, IssuedBook, Fine, Notification = init_db_models(db)
 
-    return app
-
-    # ── Google + GitHub OAuth ──────────────────────────────
+    # OAuth
     from authlib.integrations.flask_client import OAuth
+
     oauth = OAuth(app)
 
-    # Google OAuth
     app.extensions['google_oauth'] = oauth.register(
         name='google',
         client_id=os.environ.get('GOOGLE_CLIENT_ID'),
@@ -47,7 +56,6 @@ def create_app():
         client_kwargs={'scope': 'openid email profile'}
     )
 
-    # GitHub OAuth
     app.extensions['github_oauth'] = oauth.register(
         name='github',
         client_id=os.environ.get('GITHUB_CLIENT_ID'),
@@ -58,24 +66,17 @@ def create_app():
         client_kwargs={'scope': 'read:user user:email'}
     )
 
-    @login_manager.user_loader
-    def load_user(user_id):
-        from models import User
-        return db.session.get(User, int(user_id))
+    # Register blueprints
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(main_bp)
+    app.register_blueprint(api)
 
+    # Create database
     with app.app_context():
-        from models import init_db_models
-        User, Book, Category, IssuedBook, Fine, Notification = init_db_models(db)
-
         db.create_all()
 
-        # Seed only if the database is empty
         if db.session.execute(select(User)).first() is None:
             _seed()
-
-        from routes import auth, main
-        app.register_blueprint(auth)
-        app.register_blueprint(main)
 
     return app
 

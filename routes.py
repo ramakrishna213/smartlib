@@ -100,8 +100,13 @@ def login():
 
     from flask import request, jsonify
 
-@auth.route('/api/login', methods=['POST'])
+@auth.route('/api/login', methods=['GET', 'POST'])
 def api_login():
+    if request.method == "GET":
+        return jsonify({
+            "status": "API is working"
+        })
+
     data = request.get_json()
 
     email = data.get("email", "").strip().lower()

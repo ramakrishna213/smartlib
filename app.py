@@ -28,8 +28,8 @@ def create_app():
     login_manager.login_view = 'auth.login'
 
     # Register blueprints  👈 HERE
-    app.register_blueprint(auth)
-    app.register_blueprint(main)
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(main_bp)
     app.register_blueprint(api)
 
     return app

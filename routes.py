@@ -8,6 +8,7 @@ import secrets
 import os
 import requests
 from werkzeug.utils import secure_filename
+from flask import request, jsonify
 
 
 auth = Blueprint('auth', __name__)
@@ -97,6 +98,40 @@ def login():
 
     return render_template('login.html')
 
+    from flask import request, jsonify
+
+@auth.route('/api/login', methods=['POST'])
+def api_login():
+    data = request.get_json()
+
+    email = data.get("email", "").strip().lower()
+    password = data.get("password", "")
+
+    session = db().session
+
+    user = session.execute(
+        select(m().User).where(m().User.email == email)
+    ).scalar_one_or_none()
+
+    if user is None:
+        return jsonify({
+            "success": False,
+            "message": "User not found"
+        }), 404
+
+    if not user.check_password(password):
+        return jsonify({
+            "success": False,
+            "message": "Incorrect password"
+        }), 401
+
+    return jsonify({
+        "success": True,
+        "id": user.id,
+        "name": user.name,
+        "email": user.email,
+        "role": user.role
+    })
 
 # ─── Logout ────────────────────────────────────────
 

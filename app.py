@@ -6,6 +6,8 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from sqlalchemy import select
+from routes import auth as auth_bp, main as main_bp
+from api_routes import api
 
 db = SQLAlchemy()
 login_manager = LoginManager()
@@ -15,16 +17,22 @@ def create_app():
 
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'smartlib-secret-key-2024')
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///smartlib.db'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['SQLALALCHEMY_TRACK_MODIFICATIONS'] = False
 
     # Upload configuration
     app.config['UPLOAD_FOLDER'] = os.path.join(app.static_folder, 'uploads', 'books')
-    app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50 MB
-    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
 
     db.init_app(app)
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
+
+    # Register blueprints  👈 HERE
+    app.register_blueprint(auth)
+    app.register_blueprint(main)
+    app.register_blueprint(api)
+
+    return app
 
     # ── Google + GitHub OAuth ──────────────────────────────
     from authlib.integrations.flask_client import OAuth

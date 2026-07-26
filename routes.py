@@ -98,8 +98,6 @@ def login():
 
     return render_template('login.html')
 
-    from flask import request, jsonify
-
 @auth.route('/api/login', methods=['GET', 'POST'])
 def api_login():
     if request.method == "GET":

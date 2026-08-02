@@ -64,11 +64,7 @@ jobs:
 
       - name: Build Android app
         run: |
-          cd smartlib-capacitor-android
-          npm install
-          npm run build
-          npx cap sync android
-          cd android
+          cd smartlib-capacitor-android/android
           if [ ! -x ./gradlew ]; then
             gradle wrapper --gradle-version 8.7
           fi

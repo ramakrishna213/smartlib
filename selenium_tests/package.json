@@ -1,0 +1,14 @@
+{
+  "name": "smartlib-selenium-tests",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "test": "node selenium_runner.js",
+    "report": "node selenium_runner.js --report"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "selenium-webdriver": "^4.35.0"
+  }
+}

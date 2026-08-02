@@ -68,5 +68,15 @@ jobs:
       - name: Run Selenium tests
         env:
           BASE_URL: http://127.0.0.1:5000
+          CHROME_BIN: ${{ env.CHROME_BIN }}
         run: |
+          mkdir -p selenium_tests/reports/e2e
           npm test --prefix selenium_tests
+
+      - name: Upload Selenium reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: selenium-e2e-reports
+          path: selenium_tests/reports/
+          if-no-files-found: warn

@@ -100,7 +100,9 @@ jobs:
 
       - name: Prepare reports
         run: |
-          mkdir -p site/reports/latest site/reports/history/build-${{ github.run_number }}
+          mkdir -p site site/reports/latest site/reports/history/build-${{ github.run_number }}
+          echo "<!DOCTYPE html><html><body><h1>Android Appium E2E Reports</h1></body></html>" > site/index.html
+          touch site/.nojekyll
           cp -r automation/reports/* site/reports/latest/ || true
           cp -r automation/reports/* site/reports/history/build-${{ github.run_number }}/ || true
           cp automation/reports/summary.md site/reports/latest/summary.md || true

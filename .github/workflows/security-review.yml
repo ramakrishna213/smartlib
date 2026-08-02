@@ -1,4 +1,4 @@
-name: Security Review
+name: Backend Security Review
 
 on:
   push:
@@ -6,11 +6,12 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  security-review:
+  backend-security-audit:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -25,17 +26,20 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt semgrep pip-audit openpyxl
 
-      - name: Detect backend technology
+      - name: Detect backend stack
         run: |
-          python - <<'PY'
-          import os
-          from pathlib import Path
-          text = Path('requirements.txt').read_text(encoding='utf-8', errors='ignore')
-          print('backend=flask' if 'flask' in text.lower() else 'backend=unknown')
-          print('language=python')
-          PY
+          python security_audit/backend_inventory.py
 
-      - name: Run Semgrep SAST
+      - name: Generate 400+ structured test cases
+        run: |
+          python security_audit/generate_test_cases.py
+
+      - name: Generate reports and workbook artifacts
+        run: |
+          python security_audit/generate_reports.py
+          python security_audit/generate_load_tests.py
+
+      - name: Run Semgrep
         run: |
           semgrep --config=auto --json . > semgrep-report.json || true
 
@@ -43,23 +47,24 @@ jobs:
         run: |
           pip-audit -r requirements.txt --format json > pip-audit-report.json || true
 
-      - name: Generate reports
-        run: |
-          python scripts/generate_security_reports.py
-
-      - name: Upload reports
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: security-reports
+          name: backend-security-audit
           path: |
             Vulnerability Test Results/
             semgrep-report.json
             pip-audit-report.json
+          retention-days: 30
 
-      - name: Publish GitHub summary
+      - name: Publish GitHub Action summary
+        if: always()
         run: |
-          echo "## Security Review" >> $GITHUB_STEP_SUMMARY
+          echo "# Backend Security Audit Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- SAST scan completed with Semgrep" >> $GITHUB_STEP_SUMMARY
-          echo "- Dependency audit completed with pip-audit" >> $GITHUB_STEP_SUMMARY
-          echo "- Reports generated in Vulnerability Test Results/" >> $GITHUB_STEP_SUMMARY
+          echo "- Framework detected: Flask / Python" >> $GITHUB_STEP_SUMMARY
+          echo "- Inventory report: Vulnerability Test Results/backend-inventory.md" >> $GITHUB_STEP_SUMMARY
+          echo "- Security report: Vulnerability Test Results/security-review.md" >> $GITHUB_STEP_SUMMARY
+          echo "- Executive summary: Vulnerability Test Results/executive-summary.md" >> $GITHUB_STEP_SUMMARY
+          echo "- Test cases: Vulnerability Test Results/test-cases.xlsx" >> $GITHUB_STEP_SUMMARY

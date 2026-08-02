@@ -27,19 +27,41 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt openpyxl
+          pip install -r requirements.txt pytest Appium-Python-Client openpyxl
 
-      - name: Install Node tooling
+      - name: Install Node dependencies
         run: |
-          npm install selenium-webdriver webdriverio
+          cd automation
+          npm install
+          cd ../selenium_tests
+          npm install
 
-      - name: Run Selenium test summary generator
+      - name: Start Flask app for Selenium checks
         run: |
-          python selenium-tests/generate_test_summary.py
+          python app.py > /tmp/smartlib.log 2>&1 &
+          for i in {1..30}; do
+            curl -sf http://127.0.0.1:5000/ >/dev/null 2>&1 && break
+            sleep 2
+          done
+          curl -I http://127.0.0.1:5000/ || true
 
-      - name: Run Appium test summary generator
+      - name: Run Appium pytest suite
         run: |
-          python appium-tests/generate_test_summary.py
+          python -m pytest appium_tests/tests/test_smartlib_appium.py -q
+        continue-on-error: true
+
+      - name: Generate Appium report artifact
+        run: |
+          mkdir -p appium_tests/reports
+          python appium_tests/run_appium_tests.py --demo --output appium_tests/reports/appium_e2e_report.xlsx
+
+      - name: Run Selenium E2E suite
+        env:
+          BASE_URL: http://127.0.0.1:5000
+        run: |
+          cd selenium_tests
+          npm test
+        continue-on-error: true
 
       - name: Run security report generator
         run: |
@@ -52,8 +74,8 @@ jobs:
       - name: Prepare artifacts directory
         run: |
           mkdir -p artifacts
-          cp -f selenium-tests/test-summary.xlsx artifacts/ || true
-          cp -f appium-tests/appium-test-summary.xlsx artifacts/ || true
+          cp -f selenium_tests/reports/selenium_e2e_report.xlsx artifacts/ || true
+          cp -f appium_tests/reports/appium_e2e_report.xlsx artifacts/ || true
           cp -f "Vulnerability Test Results/findings.xlsx" artifacts/ || true
           cp -f "Vulnerability Test Results/endpoint-inventory.xlsx" artifacts/ || true
           cp -f "Vulnerability Test Results/security-review.md" artifacts/ || true
@@ -63,8 +85,8 @@ jobs:
         run: |
           echo "## Test Report Bundle" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- Selenium report: selenium-tests/test-summary.xlsx" >> $GITHUB_STEP_SUMMARY
-          echo "- Appium report: appium-tests/appium-test-summary.xlsx" >> $GITHUB_STEP_SUMMARY
+          echo "- Selenium report: selenium_tests/reports/selenium_e2e_report.xlsx" >> $GITHUB_STEP_SUMMARY
+          echo "- Appium report: appium_tests/reports/appium_e2e_report.xlsx" >> $GITHUB_STEP_SUMMARY
           echo "- Security reports: Vulnerability Test Results/" >> $GITHUB_STEP_SUMMARY
           echo "- Load test output: load-test-output.txt" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY

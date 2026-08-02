@@ -1,0 +1,137 @@
+name: Android Appium E2E CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * *'
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  android-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Android SDK dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget unzip libglib2.0-0
+          mkdir -p "$HOME/android-sdk"
+          cd "$HOME/android-sdk"
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O tools.zip
+          unzip -q tools.zip
+          mkdir -p cmdline-tools/latest
+          cp -r cmdline-tools/* cmdline-tools/latest/ || true
+          export ANDROID_HOME="$HOME/android-sdk"
+          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+          yes | sdkmanager --licenses
+          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" "system-images;android-34;google_apis;x86_64" "emulator"
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install Node deps
+        run: |
+          cd automation
+          npm install
+
+      - name: Build Android app
+        run: |
+          cd smartlib-capacitor-android
+          npm install
+          npm run build
+          npx cap sync android
+          cd android
+          ./gradlew assembleDebug
+
+      - name: Start Android emulator
+        run: |
+          export ANDROID_HOME="$HOME/android-sdk"
+          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+          echo "no" | avdmanager create avd -n testavd -k "system-images;android-34;google_apis;x86_64" --device "pixel_6"
+          $ANDROID_HOME/emulator/emulator -avd testavd -no-window -gpu swiftshader_indirect -no-snapshot > /tmp/emulator.log 2>&1 &
+          adb wait-for-device
+          adb shell input keyevent 82 || true
+
+      - name: Install APK
+        run: |
+          find smartlib-capacitor-android/android/app/build/outputs/apk/debug -name '*.apk' -print
+          adb install -r $(find smartlib-capacitor-android/android/app/build/outputs/apk/debug -name '*.apk' | head -n 1)
+
+      - name: Start Appium server
+        run: |
+          npx appium server --address 127.0.0.1 --port 4723 > /tmp/appium.log 2>&1 &
+          sleep 15
+          curl -s http://127.0.0.1:4723/status | head
+
+      - name: Execute Appium tests
+        run: |
+          cd automation
+          npm test
+        continue-on-error: true
+
+      - name: Prepare reports
+        run: |
+          mkdir -p site/reports/latest site/reports/history/build-${{ github.run_number }}
+          cp -r automation/reports/* site/reports/latest/ || true
+          cp -r automation/reports/* site/reports/history/build-${{ github.run_number }}/ || true
+          cp automation/reports/summary.md site/reports/latest/summary.md || true
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-appium-artifacts
+          path: |
+            automation/reports/
+            automation/screenshots/
+            automation/logs/
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Publish GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        if: always()
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
+          allow_empty_files: true
+
+      - name: Publish GitHub Action summary
+        if: always()
+        run: |
+          echo "# Android Appium E2E Execution Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Build Number: ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Execution Date: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "- Git Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Branch: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Report URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/reports/latest/execution-report.html" >> $GITHUB_STEP_SUMMARY

@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
+import uuid
 from flask_login import login_user, logout_user, login_required, current_user
 from datetime import date, timedelta, datetime
 from functools import wraps
@@ -167,17 +168,24 @@ def register():
             flash('Email already registered.', 'danger')
             return redirect(url_for('auth.register'))
 
+        normalized_student_id = (student_id or '').strip() or f'STU-{uuid.uuid4().hex[:8].upper()}'
+
         user = m().User(
             name=name,
             email=email,
             role='member',
-            student_id=student_id or None,
+            student_id=normalized_student_id,
             department=department,
             password_hash=generate_password_hash(password)
         )
 
-        session.add(user)
-        session.commit()
+        try:
+            session.add(user)
+            session.commit()
+        except Exception:
+            session.rollback()
+            flash('Unable to create account right now. Please try again.', 'danger')
+            return redirect(url_for('auth.register'))
 
         flash('Account created! Please login.', 'success')
         return redirect(url_for('auth.login'))

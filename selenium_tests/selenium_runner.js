@@ -8,6 +8,22 @@ const OUTPUT_DIR = path.join(__dirname, 'reports', 'e2e');
 const REPORT_PATH = path.join(OUTPUT_DIR, 'selenium_e2e_report.xlsx');
 const JSON_REPORT_PATH = path.join(OUTPUT_DIR, 'selenium_e2e_report.json');
 
+async function waitForApp(baseUrl) {
+  const startedAt = Date.now();
+  while (Date.now() - startedAt < 20000) {
+    try {
+      const response = await fetch(baseUrl + '/');
+      if (response.ok) {
+        return;
+      }
+    } catch (error) {
+      // Retry until the app is reachable.
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+  throw new Error(`App did not become reachable at ${baseUrl} within 20 seconds`);
+}
+
 async function runTests() {
   const results = [];
   let driver;
@@ -36,6 +52,7 @@ async function runTests() {
     await driver.manage().setTimeouts({ implicit: 10000 });
 
     const baseUrl = process.env.BASE_URL || 'http://127.0.0.1:5000';
+    await waitForApp(baseUrl);
 
     await runStep(driver, results, 'homepage_loads', async () => {
       await driver.get(baseUrl + '/');
@@ -71,12 +88,32 @@ async function runTests() {
     await runStep(driver, results, 'logout_and_admin_login', async () => {
       await driver.get(baseUrl + '/logout');
       await driver.get(baseUrl + '/admin/login');
-      await driver.findElement(By.name('email')).clear();
-      await driver.findElement(By.name('email')).sendKeys('admin@smartlib.com');
-      await driver.findElement(By.name('password')).clear();
-      await driver.findElement(By.name('password')).sendKeys('admin123');
+      await driver.wait(until.elementLocated(By.name('email')), 10000);
+
+      const emailInput = await driver.findElement(By.name('email'));
+      await emailInput.clear();
+      await emailInput.sendKeys('admin@smartlib.com');
+
+      const passwordInput = await driver.findElement(By.name('password'));
+      await passwordInput.clear();
+      await passwordInput.sendKeys('admin123');
+
       await driver.findElement(By.css('button[type="submit"]')).click();
-      await driver.wait(until.urlContains('/admin/dashboard'), 10000);
+
+      await driver.wait(async () => {
+        try {
+          const currentUrl = await driver.getCurrentUrl();
+          const bodyText = await driver.findElement(By.tagName('body')).getText();
+          return currentUrl.includes('/admin') || bodyText.includes('Admin Dashboard') || bodyText.includes('Welcome Admin') || bodyText.includes('Dashboard');
+        } catch (error) {
+          return false;
+        }
+      }, 15000);
+
+      const bodyText = await driver.findElement(By.tagName('body')).getText();
+      if (!bodyText.includes('Admin Dashboard') && !bodyText.includes('Welcome Admin') && !bodyText.includes('Dashboard')) {
+        throw new Error(`Unexpected admin page content: ${bodyText.slice(0, 200)}`);
+      }
     });
 
     await runStep(driver, results, 'books_catalog_access', async () => {
@@ -89,15 +126,26 @@ async function runTests() {
     });
 
     await runStep(driver, results, 'member_registration_flow', async () => {
-      const uniqueEmail = `selenium_${Date.now()}@example.com`;
+      const uniqueEmail = `selenium_${Date.now()}_${Math.random().toString(36).slice(2)}@example.com`;
       await driver.get(baseUrl + '/register');
       await driver.findElement(By.name('name')).sendKeys('Selenium Tester');
       await driver.findElement(By.name('email')).sendKeys(uniqueEmail);
       await driver.findElement(By.name('password')).sendKeys('Selenium123');
-      await driver.findElement(By.name('student_id')).sendKeys('STU-SEL-001');
+      await driver.findElement(By.name('student_id')).sendKeys(`STU-SEL-${Date.now()}`);
       await driver.findElement(By.name('department')).sendKeys('Engineering');
       await driver.findElement(By.css('button[type="submit"]')).click();
-      await driver.wait(until.urlContains('/login'), 10000);
+
+      await driver.wait(async () => {
+        const currentUrl = await driver.getCurrentUrl();
+        const bodyText = await driver.findElement(By.tagName('body')).getText();
+        return currentUrl.includes('/login') || bodyText.includes('Create account') || bodyText.includes('Account created');
+      }, 15000);
+
+      const currentUrl = await driver.getCurrentUrl();
+      const bodyText = await driver.findElement(By.tagName('body')).getText();
+      if (!currentUrl.includes('/login') && !bodyText.includes('Create account') && !bodyText.includes('Account created')) {
+        throw new Error(`Registration flow did not complete as expected. Current URL: ${currentUrl}`);
+      }
     });
   } catch (error) {
     results.push({

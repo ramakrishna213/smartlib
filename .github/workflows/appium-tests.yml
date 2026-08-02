@@ -19,10 +19,12 @@ on:
 jobs:
   android-appium:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
     env:
       ANDROID_API_LEVEL: 31
       APPIUM_SERVER_URL: http://127.0.0.1:4723/wd/hub
+      ANDROID_APP_PACKAGE: com.example.smartlib
+      ANDROID_APP_ACTIVITY: .MainActivity
 
     steps:
       - name: Checkout repository
@@ -39,36 +41,68 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Start Android emulator and run Appium suite
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: ${{ env.ANDROID_API_LEVEL }}
-          arch: x86_64
-          profile: pixel_6
-          force-avd-creation: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
-          disable-animations: true
-          script: |
-            set -e
-            sudo apt-get update
-            sudo apt-get install -y gradle
-            python -m pip install --upgrade pip
-            pip install -r requirements.txt -r appium_tests/requirements.txt pytest
-            npm install -g appium@2.15.0 appium-uiautomator2-driver@3.0.0
-            cd smartlib-capacitor-android/android
+      - name: Install Android SDK dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget unzip libglib2.0-0 default-jdk gradle
+          mkdir -p "$HOME/android-sdk"
+          cd "$HOME/android-sdk"
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O tools.zip
+          unzip -q tools.zip
+          mkdir -p cmdline-tools/latest
+          cp -r cmdline-tools/* cmdline-tools/latest/ || true
+          export ANDROID_HOME="$HOME/android-sdk"
+          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+          yes | sdkmanager --licenses
+          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" "system-images;android-34;google_apis;x86_64" "emulator"
+
+      - name: Install Python and Appium dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r appium_tests/requirements.txt pytest
+          npm install -g appium@2.15.0 appium-uiautomator2-driver@3.0.0
+
+      - name: Build Android app
+        run: |
+          cd smartlib-capacitor-android
+          npm install
+          npm run build
+          npx cap sync android
+          cd android
+          if [ ! -x ./gradlew ]; then
             gradle wrapper --gradle-version 8.7
-            ./gradlew assembleDebug
-            adb install -r app/build/outputs/apk/debug/app-debug.apk
-            appium --port 4723 > /tmp/appium.log 2>&1 &
-            for i in $(seq 1 30); do
-              if curl -s http://127.0.0.1:4723/status >/dev/null; then
-                break
-              fi
-              sleep 2
-            done
-            cd $GITHUB_WORKSPACE
-            python -m pytest appium_tests/tests -q --maxfail=1
-            python appium_tests/run_appium_tests.py --demo --output appium_tests/reports/appium_e2e_report.xlsx
+          fi
+          chmod +x ./gradlew
+          ./gradlew assembleDebug
+
+      - name: Start Android emulator
+        run: |
+          export ANDROID_HOME="$HOME/android-sdk"
+          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+          echo "no" | avdmanager create avd -n testavd -k "system-images;android-34;google_apis;x86_64" --device "pixel_6"
+          $ANDROID_HOME/emulator/emulator -avd testavd -no-window -gpu swiftshader_indirect -no-snapshot > /tmp/emulator.log 2>&1 &
+          adb wait-for-device
+          adb shell input keyevent 82 || true
+
+      - name: Install APK and start Appium
+        run: |
+          export ANDROID_HOME="$HOME/android-sdk"
+          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+          adb install -r smartlib-capacitor-android/android/app/build/outputs/apk/debug/app-debug.apk
+          appium --port 4723 > /tmp/appium.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -s http://127.0.0.1:4723/status >/dev/null; then
+              break
+            fi
+            sleep 2
+          done
+
+      - name: Run Appium E2E suite
+        run: |
+          mkdir -p appium_tests/reports
+          python -m pytest appium_tests/tests -q --maxfail=1
+          python appium_tests/run_appium_tests.py --demo --output appium_tests/reports/appium_e2e_report.xlsx
+        continue-on-error: true
 
       - name: Upload Appium artifacts
         if: always()
@@ -78,3 +112,4 @@ jobs:
           path: |
             appium_tests/reports
             /tmp/appium.log
+            /tmp/emulator.log

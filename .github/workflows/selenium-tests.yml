@@ -1,0 +1,62 @@
+name: Selenium UI Tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['main']
+    paths:
+      - 'selenium_tests/**'
+      - 'automation/**'
+      - 'app.py'
+      - 'requirements.txt'
+      - '.github/workflows/selenium-tests.yml'
+  pull_request:
+    paths:
+      - 'selenium_tests/**'
+      - 'automation/**'
+      - 'app.py'
+      - 'requirements.txt'
+      - '.github/workflows/selenium-tests.yml'
+
+jobs:
+  selenium:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install Selenium test dependencies
+        run: |
+          npm install --prefix selenium_tests
+
+      - name: Start Flask app
+        run: |
+          python app.py > /tmp/smartlib.log 2>&1 &
+          for i in {1..30}; do
+            curl -sf http://127.0.0.1:5000/ >/dev/null 2>&1 && break
+            sleep 2
+          done
+          curl -I http://127.0.0.1:5000/ || true
+
+      - name: Run Selenium tests
+        env:
+          BASE_URL: http://127.0.0.1:5000
+        run: |
+          npm test --prefix selenium_tests

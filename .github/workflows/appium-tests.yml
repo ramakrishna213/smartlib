@@ -6,38 +6,75 @@ on:
     branches: ['main']
     paths:
       - 'appium_tests/**'
+      - 'smartlib-capacitor-android/**'
       - 'requirements.txt'
       - '.github/workflows/appium-tests.yml'
   pull_request:
     paths:
       - 'appium_tests/**'
+      - 'smartlib-capacitor-android/**'
       - 'requirements.txt'
       - '.github/workflows/appium-tests.yml'
 
 jobs:
-  appium:
+  android-appium:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
+    env:
+      ANDROID_API_LEVEL: 31
+      APPIUM_SERVER_URL: http://127.0.0.1:4723/wd/hub
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Install Appium test dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt -r appium_tests/requirements.txt pytest
+      - name: Start Android emulator and run Appium suite
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ env.ANDROID_API_LEVEL }}
+          arch: x86_64
+          profile: pixel_6
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          disable-animations: true
+          script: |
+            set -e
+            sudo apt-get update
+            sudo apt-get install -y gradle
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt -r appium_tests/requirements.txt pytest
+            npm install -g appium@2.15.0 appium-uiautomator2-driver@3.0.0
+            cd smartlib-capacitor-android/android
+            gradle wrapper --gradle-version 8.7
+            ./gradlew assembleDebug
+            adb install -r app/build/outputs/apk/debug/app-debug.apk
+            appium --port 4723 > /tmp/appium.log 2>&1 &
+            for i in $(seq 1 30); do
+              if curl -s http://127.0.0.1:4723/status >/dev/null; then
+                break
+              fi
+              sleep 2
+            done
+            cd $GITHUB_WORKSPACE
+            python -m pytest appium_tests/tests -q --maxfail=1
+            python appium_tests/run_appium_tests.py --demo --output appium_tests/reports/appium_e2e_report.xlsx
 
-      - name: Run Appium pytest suite
-        run: |
-          python -m pytest appium_tests/tests/test_smartlib_appium.py -q
-        continue-on-error: true
-
-      - name: Generate Appium report
-        run: |
-          python appium_tests/run_appium_tests.py --demo --output appium_tests/reports/appium_e2e_report.xlsx || true
+      - name: Upload Appium artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: appium-test-artifacts
+          path: |
+            appium_tests/reports
+            /tmp/appium.log

@@ -41,7 +41,7 @@ jobs:
       - name: Install Android SDK dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget unzip libglib2.0-0
+          sudo apt-get install -y wget unzip libglib2.0-0 gradle
           mkdir -p "$HOME/android-sdk"
           cd "$HOME/android-sdk"
           wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O tools.zip
@@ -70,6 +70,10 @@ jobs:
           npm run build
           npx cap sync android
           cd android
+          if [ ! -x ./gradlew ]; then
+            gradle wrapper --gradle-version 8.7
+          fi
+          chmod +x ./gradlew
           ./gradlew assembleDebug
 
       - name: Start Android emulator

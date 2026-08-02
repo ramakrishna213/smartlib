@@ -46,14 +46,15 @@ jobs:
         run: |
           npm install --prefix selenium_tests
 
-      - name: Install Chrome via browser-action
-        uses: browser-actions/setup-chrome@latest
-        with:
-          chrome-version: stable
-
-      - name: Configure Chrome path
+      - name: Install Google Chrome
         run: |
-          echo "CHROME_BIN=$(which chrome || which chromium-browser || which chromium || true)" >> "$GITHUB_ENV"
+          sudo apt-get update
+          sudo apt-get install -y wget gnupg
+          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg
+          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+          echo "CHROME_BIN=$(which google-chrome || which google-chrome-stable)" >> "$GITHUB_ENV"
 
       - name: Start Flask app
         run: |

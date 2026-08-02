@@ -120,8 +120,14 @@ async function runTests() {
       results,
     }, null, 2));
 
+    const failedCount = results.filter((result) => result.status === 'failed').length;
     console.log(`Selenium E2E report written to ${REPORT_PATH}`);
     console.log(`Selenium E2E JSON summary written to ${JSON_REPORT_PATH}`);
+    console.log(`Selenium E2E summary: ${results.length} total, ${failedCount} failed`);
+
+    if (failedCount > 0) {
+      process.exitCode = 1;
+    }
   }
 }
 
@@ -169,9 +175,4 @@ async function writeExcelReport(results, outputPath) {
   await workbook.xlsx.writeFile(outputPath);
 }
 
-runTests().then(() => {
-  const failed = process.env.CI ? 0 : 0;
-  if (failed > 0) {
-    process.exitCode = 1;
-  }
-});
+runTests();

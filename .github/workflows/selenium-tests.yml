@@ -47,23 +47,29 @@ jobs:
           npm install --prefix selenium_tests
 
       - name: Install Google Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      - name: Set Chrome path
         run: |
-          sudo apt-get update
-          sudo apt-get install -y wget gnupg
-          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg
-          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
-          sudo apt-get update
-          sudo apt-get install -y google-chrome-stable
-          echo "CHROME_BIN=$(which google-chrome || which google-chrome-stable)" >> "$GITHUB_ENV"
+          CHROME_BIN=$(which google-chrome || which chrome || which chromium || which chromium-browser || true)
+          echo "CHROME_BIN=${CHROME_BIN}" >> "$GITHUB_ENV"
+          echo "Using Chrome binary: ${CHROME_BIN}"
 
       - name: Start Flask app
         run: |
-          python app.py > /tmp/smartlib.log 2>&1 &
+          nohup python app.py > /tmp/smartlib.log 2>&1 &
           for i in {1..30}; do
             curl -sf http://127.0.0.1:5000/ >/dev/null 2>&1 && break
             sleep 2
           done
           curl -I http://127.0.0.1:5000/ || true
+          if ! curl -sf http://127.0.0.1:5000/ >/dev/null 2>&1; then
+            echo "Flask app did not start correctly. Log output:";
+            cat /tmp/smartlib.log || true
+            exit 1
+          fi
 
       - name: Run Selenium tests
         env:

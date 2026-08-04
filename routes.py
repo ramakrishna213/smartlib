@@ -10,10 +10,83 @@ import os
 import requests
 from werkzeug.utils import secure_filename
 from flask import request, jsonify
+import google.generativeai as genai
 
 
 auth = Blueprint('auth', __name__)
 main = Blueprint('main', __name__)
+
+
+
+# Gemini AI Assistant Route
+@main.route('/ask-ai', methods=['POST'])
+@login_required
+def ask_ai():
+
+    try:
+        data = request.get_json()
+
+        user_message = data.get("message")
+        system_prompt = data.get("system")
+
+        book_title = data.get("title")
+        book_author = data.get("author")
+        book_description = data.get("description")
+
+
+        api_key = os.getenv("GEMINI_API_KEY")
+
+        if not api_key:
+            return jsonify({
+                "reply": "Gemini API key is missing."
+            })
+
+
+        genai.configure(api_key=api_key)
+
+
+        model = genai.GenerativeModel(
+            "gemini-2.5-flash"
+        )
+
+
+        prompt = f"""
+You are SmartLib AI Reading Assistant.
+
+Book Title:
+{book_title}
+
+Author:
+{book_author}
+
+Description:
+{book_description}
+
+Instructions:
+{system_prompt}
+
+User Question:
+{user_message}
+
+Give a helpful answer for a library user.
+"""
+
+
+        response = model.generate_content(prompt)
+
+
+        return jsonify({
+            "reply": response.text
+        })
+
+
+    except Exception as e:
+
+        print("Gemini Error:", e)
+
+        return jsonify({
+            "reply": "Gemini AI is currently unavailable."
+        })
 
 
 def db():

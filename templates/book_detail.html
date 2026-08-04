@@ -360,5 +360,345 @@
     }
   }
 </script>
+<!-- AI Reading Assistant -->
+<div class="card" style="margin-top:12px">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+    <div style="width:36px;height:36px;background:linear-gradient(135deg,#2563eb,#7c3aed);
+                border-radius:10px;display:flex;align-items:center;
+                justify-content:center;color:#fff;font-size:16px">
+      <i class="fa-solid fa-robot"></i>
+    </div>
+
+    <div>
+      <div style="font-size:15px;font-weight:600;color:#111827">
+        AI Reading Assistant
+      </div>
+
+      <div style="font-size:11px;color:#6b7280">
+        Powered by Gemini AI
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- Quick Action Buttons -->
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+
+    <button onclick="askAI('Summarize the book {{ book.title }} by {{ book.author }} in 3 paragraphs')"
+            class="btn btn-sm"
+            style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe">
+      📖 Summarize
+    </button>
+
+
+    <button onclick="askAI('What are the key concepts and lessons in {{ book.title }} by {{ book.author }}?')"
+            class="btn btn-sm"
+            style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0">
+      💡 Key Concepts
+    </button>
+
+
+    <button onclick="askAI('Generate 5 quiz questions about {{ book.title }} by {{ book.author }}')"
+            class="btn btn-sm"
+            style="background:#fdf4ff;color:#7c3aed;border:1px solid #e9d5ff">
+      📝 Quiz Me
+    </button>
+
+
+    <button onclick="askAI('Recommend 5 books similar to {{ book.title }} by {{ book.author }} with reasons')"
+            class="btn btn-sm"
+            style="background:#fff7ed;color:#d97706;border:1px solid #fed7aa">
+      🔍 Similar Books
+    </button>
+
+
+    <button onclick="askAI('Who should read {{ book.title }} by {{ book.author }} and why?')"
+            class="btn btn-sm"
+            style="background:#fef2f2;color:#ef4444;border:1px solid #fecaca">
+      👤 Who Should Read
+    </button>
+
+  </div>
+
+
+  <!-- Chat Input -->
+  <div style="display:flex;gap:8px;margin-bottom:12px">
+
+    <input type="text"
+           id="ai-input"
+           class="form-control"
+           placeholder="Ask anything about this book..."
+           onkeypress="if(event.key==='Enter') sendAI()">
+
+
+    <button onclick="sendAI()"
+            style="background:#2563eb;color:#fff;border:none;
+                   padding:0 16px;border-radius:10px;cursor:pointer;
+                   font-size:16px;flex-shrink:0">
+
+      <i class="fa-solid fa-paper-plane"></i>
+
+    </button>
+
+  </div>
+
+
+
+  <!-- Chat Messages -->
+  <div id="ai-chat"
+       style="max-height:400px;overflow-y:auto;display:flex;
+              flex-direction:column;gap:10px">
+
+
+    <div style="background:#f8fafc;border-radius:10px;padding:12px;
+                font-size:13px;color:#6b7280;text-align:center">
+
+      <i class="fa-solid fa-robot" style="color:#2563eb"></i>
+
+      Hi! I'm your Gemini AI Reading Assistant.
+      Ask me anything about
+      <strong>{{ book.title }}</strong>
+      or click a quick action above!
+
+    </div>
+
+  </div>
+
+</div>
+
+
+
+<script>
+
+const BOOK_TITLE  = "{{ book.title }}";
+const BOOK_AUTHOR = "{{ book.author }}";
+const BOOK_DESC   = "{{ book.description or '' }}";
+
+
+const systemPrompt = `
+You are an expert AI reading assistant for SmartLib library system.
+
+You are helping a reader with:
+Book: ${BOOK_TITLE}
+Author: ${BOOK_AUTHOR}
+
+${BOOK_DESC ? "Description: " + BOOK_DESC : ""}
+
+Give helpful educational answers.
+Use bullet points when needed.
+Keep answers below 300 words.
+`;
+
+
+
+async function askAI(question){
+
+    await sendMessage(question);
+
+}
+
+
+
+async function sendAI(){
+
+    const input=document.getElementById("ai-input");
+
+    const question=input.value.trim();
+
+    if(!question) return;
+
+
+    input.value="";
+
+    await sendMessage(question);
+
+}
+
+
+
+async function sendMessage(userMessage){
+
+
+const chat=document.getElementById("ai-chat");
+
+
+// User message
+
+chat.innerHTML += `
+
+<div style="display:flex;justify-content:flex-end">
+
+<div style="background:#2563eb;color:#fff;padding:10px 14px;
+border-radius:12px 12px 2px 12px;font-size:13px;
+max-width:80%">
+
+${userMessage}
+
+</div>
+
+</div>
+
+`;
+
+
+
+// Loading
+
+const loadingId="loading-"+Date.now();
+
+
+chat.innerHTML += `
+
+<div id="${loadingId}"
+style="display:flex;align-items:center;gap:8px;
+padding:10px 14px;background:#f1f5f9;
+border-radius:12px;width:fit-content">
+
+<i class="fa-solid fa-robot" style="color:#2563eb"></i>
+
+<span style="font-size:13px;color:#6b7280">
+Thinking with Gemini...
+</span>
+
+<i class="fa-solid fa-spinner fa-spin"
+style="color:#2563eb"></i>
+
+</div>
+
+`;
+
+
+chat.scrollTop=chat.scrollHeight;
+
+
+
+try{
+
+
+const response = await fetch('/ask-ai', {
+
+method:'POST',
+
+headers:{
+'Content-Type':'application/json'
+},
+
+
+body:JSON.stringify({
+
+message:userMessage,
+
+system:systemPrompt,
+
+title:BOOK_TITLE,
+
+author:BOOK_AUTHOR,
+
+description:BOOK_DESC
+
+})
+
+});
+
+
+
+const data=await response.json();
+
+const reply=data.reply;
+
+
+
+document.getElementById(loadingId).remove();
+
+
+
+const formatted=reply
+
+.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+
+.replace(/\n/g,'<br>');
+
+
+
+chat.innerHTML += `
+
+
+<div style="display:flex;gap:8px;align-items:flex-start">
+
+
+<div style="width:28px;height:28px;
+background:linear-gradient(135deg,#2563eb,#7c3aed);
+border-radius:8px;
+display:flex;
+align-items:center;
+justify-content:center;
+color:#fff;
+font-size:12px">
+
+<i class="fa-solid fa-robot"></i>
+
+</div>
+
+
+
+<div style="background:#f8fafc;
+border:1px solid #e5e7eb;
+padding:10px 14px;
+border-radius:2px 12px 12px 12px;
+font-size:13px;
+color:#374151;
+max-width:85%;
+line-height:1.6">
+
+${formatted}
+
+</div>
+
+
+</div>
+
+
+`;
+
+
+
+chat.scrollTop=chat.scrollHeight;
+
+
+
+}
+
+catch(error){
+
+
+document.getElementById(loadingId).remove();
+
+
+chat.innerHTML += `
+
+
+<div style="background:#fee2e2;
+padding:10px 14px;
+border-radius:10px;
+font-size:13px;
+color:#991b1b">
+
+❌ Error connecting to Gemini AI. Please try again.
+
+</div>
+
+
+`;
+
+
+}
+
+
+}
+
+
+</script>
+
 
 {% endblock %}

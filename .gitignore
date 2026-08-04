@@ -1,6 +1,39 @@
-instance/
+.venv/
+venv/
 __pycache__/
 *.pyc
-*.db
 .env
-smartlib.db
+
+node_modules/
+**/node_modules/
+
+dist/
+**/dist/
+
+.vscode/
+
+reports/
+**/reports/
+
+*.xlsx
+# Test and audit files
+Vulnerability Test Results/
+security_audit/
+automation/
+selenium_tests/
+appium-tests/
+
+# Local database
+instance/
+
+# Node files (if not using Node build)
+package-lock.json
+**/package-lock.json
+
+# Capacitor build files
+smartlib-capacitor-android/
+Vulnerability Test Results/
+appium-tests/
+selenium-tests/
+inspect_register.py
+site/

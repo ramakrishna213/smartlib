@@ -949,16 +949,16 @@ def ask_ai():
     import requests as req
     import os
 
-    data        = request.get_json()
+    data         = request.get_json()
     user_message = data.get('message', '')
-    title       = data.get('title', '')
-    author      = data.get('author', '')
-    description = data.get('description', '')
+    title        = data.get('title', '')
+    author       = data.get('author', '')
+    description  = data.get('description', '')
 
-    api_key = os.environ.get('GEMINI_API_KEY', '')
+    api_key = os.environ.get('GROQ_API_KEY', '')
 
     if not api_key:
-        return {'reply': '❌ Gemini API key not configured.'}, 500
+        return {'reply': '❌ AI service not configured.'}, 500
 
     system = f"""You are an expert AI reading assistant for SmartLib library system.
 You are helping a reader with:
@@ -970,25 +970,32 @@ Use bullet points when needed.
 Keep answers below 300 words."""
 
     try:
-        url = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}'
+        url = 'https://api.groq.com/openai/v1/chat/completions'
 
-        payload = {
-            "system_instruction": {
-                "parts": [{"text": system}]
-            },
-            "contents": [{
-                "parts": [{"text": user_message}]
-            }]
+        headers = {
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json'
         }
 
-        response = req.post(url, json=payload, timeout=30)
+        payload = {
+            'model': 'llama-3.1-8b-instant',
+            'messages': [
+                {'role': 'system', 'content': system},
+                {'role': 'user', 'content': user_message}
+            ],
+            'max_tokens': 1000,
+            'temperature': 0.7
+        }
+
+        response = req.post(url, headers=headers, json=payload, timeout=30)
         result   = response.json()
 
-        if 'candidates' in result:
-            reply = result['candidates'][0]['content']['parts'][0]['text']
+        if 'choices' in result:
+            reply = result['choices'][0]['message']['content']
             return {'reply': reply}
         else:
-            return {'reply': f'❌ Gemini error: {result.get("error", {}).get("message", "Unknown error")}'}, 500
+            error = result.get('error', {}).get('message', 'Unknown error')
+            return {'reply': f'❌ Error: {error}'}, 500
 
     except Exception as e:
         return {'reply': f'❌ Error: {str(e)}'}, 500

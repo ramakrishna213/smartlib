@@ -36,25 +36,49 @@
     <div class="card">
       {% if members %}
         {% for member in members %}
-        <div style="display:flex;align-items:center;gap:12px;
-                    padding:12px 0;border-bottom:1px solid #f3f4f6">
-          <div class="member-avatar"
-               style="background:#dbeafe;color:#1d4ed8">
-            {{ member.name[:2].upper() }}
+        <div style="padding:12px 0;border-bottom:1px solid #f3f4f6">
+
+          <!-- Member Info -->
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="member-avatar"
+                 style="background:#dbeafe;color:#1d4ed8;flex-shrink:0">
+              {{ member.name[:2].upper() }}
+            </div>
+            <div style="flex:1">
+              <div class="member-name">{{ member.name }}</div>
+              <div class="member-meta">{{ member.student_id }} • {{ member.email }}</div>
+              <div class="member-meta">{{ member.department }}</div>
+            </div>
+            <!-- Role Badge -->
+            <span class="badge {% if member.role == 'librarian' %}badge-blue{% else %}badge-green{% endif %}">
+              {{ member.role|capitalize }}
+            </span>
           </div>
-          <div style="flex:1">
-            <div class="member-name">{{ member.name }}</div>
-            <div class="member-meta">{{ member.student_id }} • {{ member.email }}</div>
-            <div class="member-meta">{{ member.department }}</div>
+
+          <!-- Action Buttons -->
+          <div style="display:flex;gap:8px;margin-top:10px">
+
+            {% if current_user.role == 'admin' %}
+            <!-- History Button -->
+            <a href="{{ url_for('main.member_history', member_id=member.id) }}"
+               style="flex:1;font-size:12px;padding:8px;background:#dbeafe;
+                      color:#1d4ed8;border-radius:8px;text-decoration:none;
+                      font-weight:500;text-align:center">
+              <i class="fa-solid fa-clock-rotate-left"></i> History
+            </a>
+
+            <!-- Remove Button (not for admin accounts) -->
+            {% if member.role != 'admin' %}
+            <button onclick="confirmDelete('{{ member.name }}', {{ member.id }})"
+                    style="flex:1;font-size:12px;padding:8px;background:#fee2e2;
+                           color:#991b1b;border-radius:8px;border:none;
+                           font-weight:500;cursor:pointer">
+              <i class="fa-solid fa-trash"></i> Remove
+            </button>
+            {% endif %}
+            {% endif %}
+
           </div>
-          {% if current_user.role == 'admin' %}
-          <a href="{{ url_for('main.member_history', member_id=member.id) }}"
-             style="font-size:11px;padding:6px 10px;background:#dbeafe;
-                    color:#1d4ed8;border-radius:8px;text-decoration:none;
-                    font-weight:500;white-space:nowrap">
-            <i class="fa-solid fa-clock-rotate-left"></i> History
-          </a>
-          {% endif %}
         </div>
         {% endfor %}
       {% else %}
@@ -65,4 +89,64 @@
     </div>
   </div>
 </div>
+
+<!-- Delete Confirmation Modal -->
+<div id="delete-modal"
+     style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;
+            background:rgba(0,0,0,0.5);z-index:500;
+            align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:16px;padding:24px;
+              margin:20px;max-width:380px;width:100%">
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="width:56px;height:56px;background:#fee2e2;border-radius:50%;
+                  display:flex;align-items:center;justify-content:center;
+                  margin:0 auto 12px;font-size:24px;color:#ef4444">
+        <i class="fa-solid fa-trash"></i>
+      </div>
+      <div style="font-size:18px;font-weight:700;color:#111827">
+        Remove Member?
+      </div>
+      <div style="font-size:13px;color:#6b7280;margin-top:6px">
+        Are you sure you want to remove
+        <strong id="member-name-display"></strong>?
+        This will delete all their borrowing history and fines.
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px">
+      <button onclick="closeModal()"
+              style="flex:1;padding:12px;border-radius:10px;border:1.5px solid #e5e7eb;
+                     background:#fff;font-size:14px;font-weight:600;cursor:pointer;
+                     color:#374151">
+        Cancel
+      </button>
+      <form id="delete-form" method="POST" style="flex:1">
+        <button type="submit"
+                style="width:100%;padding:12px;border-radius:10px;border:none;
+                       background:#ef4444;color:#fff;font-size:14px;
+                       font-weight:600;cursor:pointer">
+          <i class="fa-solid fa-trash"></i> Remove
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  function confirmDelete(name, memberId) {
+    document.getElementById('member-name-display').textContent = name;
+    document.getElementById('delete-form').action = `/members/${memberId}/delete`;
+    document.getElementById('delete-modal').style.display = 'flex';
+  }
+
+  function closeModal() {
+    document.getElementById('delete-modal').style.display = 'none';
+  }
+
+  // Close modal when clicking outside
+  document.getElementById('delete-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+</script>
+
 {% endblock %}

@@ -858,6 +858,55 @@ def add_member():
         flash('Member added successfully!', 'success')
         return redirect(url_for('main.members'))
     return render_template('add_member.html')
+@main.route('/members/<int:member_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_member(member_id):
+    session = db().session
+    member  = session.get(m().User, member_id)
+
+    if not member:
+        flash('Member not found.', 'danger')
+        return redirect(url_for('main.members'))
+
+    if member.role == 'admin':
+        flash('Cannot delete admin accounts.', 'danger')
+        return redirect(url_for('main.members'))
+
+    # Delete related records first
+    from sqlalchemy import select
+
+    # Get all issued books for this member
+    issued = session.execute(
+        select(m().IssuedBook).where(m().IssuedBook.user_id == member_id)
+    ).scalars().all()
+
+    # Delete fines related to issued books
+    for issue in issued:
+        if issue.fine:
+            session.delete(issue.fine)
+        session.delete(issue)
+
+    # Delete notifications
+    notifs = session.execute(
+        select(m().Notification).where(m().Notification.user_id == member_id)
+    ).scalars().all()
+    for notif in notifs:
+        session.delete(notif)
+
+    # Delete fines directly linked to user
+    fines = session.execute(
+        select(m().Fine).where(m().Fine.user_id == member_id)
+    ).scalars().all()
+    for fine in fines:
+        session.delete(fine)
+
+    name = member.name
+    session.delete(member)
+    session.commit()
+
+    flash(f'Member "{name}" removed successfully!', 'success')
+    return redirect(url_for('main.members'))
 
 
 # ─── Fines ─────────────────────────────────────────

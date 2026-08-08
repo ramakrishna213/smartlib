@@ -2,6 +2,10 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
+# Force load GEMINI key into app config
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
+print(f"Startup: GEMINI_API_KEY loaded: {bool(GEMINI_API_KEY)}")
+
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
